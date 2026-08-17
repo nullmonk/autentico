@@ -35,7 +35,7 @@ const menuItems: any[] = [
   { key: "/federation", icon: <GlobalOutlined />, label: "Federation" },
   { key: "/audit-log", icon: <FileSearchOutlined />, label: "Audit Log" },
   { key: "/cors", icon: <ApiOutlined />, label: "CORS" },
-  { key: "/ca", icon: <KeyOutlined />, label: "CA" },
+  { key: "/ca", icon: <KeyOutlined />, label: "Certificates / SSL" },
   { key: "/settings", icon: <SettingOutlined />, label: "Settings" },
   { type: "divider" },
   {

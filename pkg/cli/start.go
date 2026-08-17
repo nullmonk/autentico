@@ -232,6 +232,8 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("GET /admin/api/certificates/{id}/bundle", adminAPI(ca.HandleDownloadUserCert))
 	mux.Handle("DELETE /admin/api/certificates/{id}", adminAPI(ca.HandleRevokeCertificate))
 
+	mux.Handle("GET /ca.crt", http.HandlerFunc(ca.HandleGetCAChain))
+
 	// -------------------------------------------------------------------------
 	// Account self-service API (audience: autentico-account or autentico-admin)
 	// -------------------------------------------------------------------------

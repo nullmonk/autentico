@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Table, Button, Space, Typography, Tag, Modal, Input, Form, message, Card } from "antd";
-import { DownloadOutlined, StopOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Button, Space, Typography, Tag, Modal, Input, Form, message, Card, AutoComplete, Descriptions } from "antd";
+import { DownloadOutlined, StopOutlined, PlusOutlined, LinkOutlined } from "@ant-design/icons";
 import { listCertificates, listAuthorities, revokeCertificate, generateUserCert, downloadUserCert } from "../../api/ca";
 import { Certificate } from "../../types/ca";
+import { listUsers } from "../../api/users";
 
 const { Title, Text } = Typography;
 
@@ -13,6 +14,7 @@ export default function CaPage() {
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedCertId, setSelectedCertId] = useState<string | null>(null);
   const [form] = Form.useForm();
+  const [userOptions, setUserOptions] = useState<{ value: string }[]>([]);
 
   const { data: authorities, isLoading: loadingAuth } = useQuery({
     queryKey: ["ca-authorities"],
@@ -64,20 +66,27 @@ export default function CaPage() {
         return;
       }
 
-      const blob = await generateUserCert(values.userId, activeIntermediary.id, values.interPassword, values.bundlePassword);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `bundle.p12`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      await generateUserCert(values.username, activeIntermediary.id, values.interPassword);
       setGenerateModalOpen(false);
       form.resetFields();
       queryClient.invalidateQueries({ queryKey: ["ca-certificates"] });
-      message.success("Certificate generated and downloaded");
-    } catch (err) {
-      message.error("Failed to generate certificate bundle");
+      message.success("Certificate generated successfully");
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.error_description || "Failed to generate certificate";
+      message.error(msg);
+    }
+  };
+
+  const handleUserSearch = async (value: string) => {
+    if (!value) {
+      setUserOptions([]);
+      return;
+    }
+    try {
+      const res = await listUsers({ search: value, limit: 10 });
+      setUserOptions(res.items.map((u) => ({ value: u.username })));
+    } catch {
+      setUserOptions([]);
     }
   };
 
@@ -157,8 +166,20 @@ export default function CaPage() {
     );
   }
 
+  const rootCa = authorities?.items.find(c => c.type === "ca" && !c.revoked_at);
+
   return (
     <Space direction="vertical" style={{ width: "100%" }} size="large">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Title level={4} style={{ margin: 0 }}>Certificate Authority (CA)</Title>
+        <Button
+          icon={<LinkOutlined />}
+          href="/ca.crt"
+        >
+          Download CA Chain
+        </Button>
+      </div>
+
       {intermediaryExpiringSoon && (
         <Card style={{ borderColor: "#faad14", backgroundColor: "#fffbe6" }}>
           <Text type="warning">
@@ -167,8 +188,26 @@ export default function CaPage() {
           </Text>
         </Card>
       )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Title level={4} style={{ margin: 0 }}>Certificates</Title>
+
+      <Card>
+        <Descriptions column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
+          {rootCa && (
+            <>
+              <Descriptions.Item label="Root CA ID"><Text copyable>{rootCa.id}</Text></Descriptions.Item>
+              <Descriptions.Item label="Root CA Expiration">{rootCa.expire_date ? new Date(rootCa.expire_date).toLocaleString() : "-"}</Descriptions.Item>
+            </>
+          )}
+          {activeIntermediary && (
+            <>
+              <Descriptions.Item label="Intermediary CA ID"><Text copyable>{activeIntermediary.id}</Text></Descriptions.Item>
+              <Descriptions.Item label="Intermediary CA Expiration">{activeIntermediary.expire_date ? new Date(activeIntermediary.expire_date).toLocaleString() : "-"}</Descriptions.Item>
+            </>
+          )}
+        </Descriptions>
+      </Card>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24 }}>
+        <Title level={4} style={{ margin: 0 }}>Issued User Certificates</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -182,7 +221,7 @@ export default function CaPage() {
       </div>
 
       <Table
-        dataSource={certs?.items || []}
+        dataSource={(certs?.items || []).filter(c => c.type === "user")}
         columns={columns}
         rowKey="id"
         loading={loadingCerts || loadingAuth}
@@ -216,11 +255,15 @@ export default function CaPage() {
       >
         <Form form={form} layout="vertical" onFinish={handleGenerate}>
           <Form.Item
-            name="userId"
-            label="User ID"
-            rules={[{ required: true, message: "Please enter the User ID" }]}
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: "Please select a user" }]}
           >
-            <Input />
+            <AutoComplete
+              options={userOptions}
+              onSearch={handleUserSearch}
+              placeholder="Search by username..."
+            />
           </Form.Item>
           <Form.Item
             name="interPassword"
@@ -229,15 +272,8 @@ export default function CaPage() {
           >
             <Input.Password />
           </Form.Item>
-          <Form.Item
-            name="bundlePassword"
-            label="New Bundle Password"
-            rules={[{ required: true, message: "Please enter a password for the new bundle" }]}
-          >
-            <Input.Password />
-          </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">Generate & Download</Button>
+            <Button type="primary" htmlType="submit">Generate</Button>
           </Form.Item>
         </Form>
       </Modal>

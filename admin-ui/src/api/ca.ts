@@ -19,21 +19,15 @@ export async function revokeCertificate(id: string): Promise<void> {
 }
 
 export async function generateUserCert(
-  userId: string,
+  username: string,
   interId: string,
   interPw: string,
-  bundlePw: string
-): Promise<Blob> {
-  const { data } = await apiClient.post(
-    BASE,
-    {
-      user_id: userId,
-      cert_id: interId,
-      cert_pw: interPw,
-      bundle_password: bundlePw,
-    },
-    { responseType: "blob" }
-  );
+): Promise<{ success: boolean; id: string }> {
+  const { data } = await apiClient.post(BASE, {
+    username: username,
+    cert_id: interId,
+    cert_pw: interPw,
+  });
   return data;
 }
 

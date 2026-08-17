@@ -53,6 +53,34 @@ func HandleListCertificates(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, map[string]interface{}{"items": filteredCerts})
 }
 
+func HandleGetCAChain(w http.ResponseWriter, r *http.Request) {
+	root, err := GetActiveRootCA(db.GetReadDB())
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get root CA")
+		return
+	}
+	if root == nil {
+		utils.WriteErrorResponse(w, http.StatusNotFound, "not_found", "Root CA not found")
+		return
+	}
+
+	inter, err := GetActiveIntermediaryCA(db.GetReadDB())
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get intermediary CA")
+		return
+	}
+	if inter == nil {
+		utils.WriteErrorResponse(w, http.StatusNotFound, "not_found", "Intermediary CA not found")
+		return
+	}
+
+	chain := inter.CertPEM + "\n" + root.CertPEM
+
+	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"ca-chain.crt\"")
+	w.Write([]byte(chain))
+}
+
 func HandleListAuthorities(w http.ResponseWriter, r *http.Request) {
 	certs, err := ListCertificates(db.GetReadDB())
 	if err != nil {
@@ -82,8 +110,7 @@ func HandleRevokeCertificate(w http.ResponseWriter, r *http.Request) {
 type GenerateCertRequest struct {
 	IntermediaryID       string `json:"cert_id"`
 	IntermediaryPassword string `json:"cert_pw"`
-	UserID               string `json:"user_id"`
-	BundlePassword       string `json:"bundle_password"`
+	Username             string `json:"username"`
 }
 
 func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
@@ -93,12 +120,12 @@ func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.IntermediaryPassword == "" || req.BundlePassword == "" || req.IntermediaryID == "" || req.UserID == "" {
+	if req.IntermediaryPassword == "" || req.IntermediaryID == "" || req.Username == "" {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Missing required fields")
 		return
 	}
 
-	u, err := user.UserByID(req.UserID)
+	u, err := user.UserByUsername(req.Username)
 	if err != nil || u == nil {
 		utils.WriteErrorResponse(w, http.StatusNotFound, "not_found", "User not found")
 		return
@@ -216,20 +243,10 @@ func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parsedCert, err := x509.ParseCertificate(derBytes)
-	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse generated cert")
-		return
-	}
-	pfxData, err := pkcs12.Encode(rand.Reader, priv, parsedCert, []*x509.Certificate{interCert}, req.BundlePassword)
-	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to create pkcs12 bundle")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/x-pkcs12")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.p12\"", u.Username))
-	w.Write(pfxData)
+	RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"id":      cert.ID,
+	})
 }
 
 func HandleDownloadUserCert(w http.ResponseWriter, r *http.Request) {
