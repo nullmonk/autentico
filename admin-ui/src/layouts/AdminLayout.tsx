@@ -35,7 +35,15 @@ const menuItems: any[] = [
   { key: "/federation", icon: <GlobalOutlined />, label: "Federation" },
   { key: "/audit-log", icon: <FileSearchOutlined />, label: "Audit Log" },
   { key: "/cors", icon: <ApiOutlined />, label: "CORS" },
-  { key: "/ca", icon: <KeyOutlined />, label: "Certificates / SSL" },
+  {
+    key: "ca-group",
+    icon: <KeyOutlined />,
+    label: "Certificates / SSL",
+    children: [
+      { key: "/ca", label: "CA" },
+      { key: "/ca-clients", label: "Client Certificates" },
+    ],
+  },
   { key: "/settings", icon: <SettingOutlined />, label: "Settings" },
   { type: "divider" },
   {
@@ -60,10 +68,20 @@ export default function AdminLayout() {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const selectedKey =
-    menuItems.find(
-      (item) => item.key && item.key !== "/" && location.pathname.startsWith(item.key)
-    )?.key ?? "/";
+  const findSelectedKey = (items: any[], path: string): string => {
+    if (path === "/") return "/";
+    for (const item of items) {
+      if (item.children) {
+        const childMatch = findSelectedKey(item.children, path);
+        if (childMatch !== "/") return childMatch;
+      }
+      if (item.key && item.key !== "/" && path.startsWith(item.key)) {
+        return item.key;
+      }
+    }
+    return "/";
+  };
+  const selectedKey = findSelectedKey(menuItems, location.pathname);
 
   const handleLogout = () => {
     window.location.href = "/oauth2/logout";
