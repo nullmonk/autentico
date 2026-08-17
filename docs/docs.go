@@ -2917,6 +2917,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/api/users/lookup": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "Resolves a list of user IDs, emails, and/or usernames into full user profiles in a single call. Maximum 100 identifiers total across all fields per request. Designed for external systems (e.g. ABAC policy engines) that need to resolve known identifiers into user data. Returns both matched users and any identifiers that could not be found.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-users"
+                ],
+                "summary": "Batch lookup users by identifiers",
+                "parameters": [
+                    {
+                        "description": "Lookup request with IDs, emails, and/or usernames",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.LookupUsersRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-user_LookupUsersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.AuthErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.AuthErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/api/users/{id}": {
             "get": {
                 "security": [
@@ -4817,6 +4868,17 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-user_LookupUsersResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/user.LookupUsersResponse"
+                },
+                "error": {
+                    "$ref": "#/definitions/model.ApiError"
+                }
+            }
+        },
         "model.AuthErrorResponse": {
             "type": "object",
             "properties": {
@@ -5234,6 +5296,66 @@ const docTemplate = `{
                 },
                 "token_type": {
                     "type": "string"
+                }
+            }
+        },
+        "user.LookupNotFound": {
+            "type": "object",
+            "properties": {
+                "emails": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "usernames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "user.LookupUsersRequest": {
+            "type": "object",
+            "properties": {
+                "emails": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "usernames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "user.LookupUsersResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user.UserResponse"
+                    }
+                },
+                "not_found": {
+                    "$ref": "#/definitions/user.LookupNotFound"
                 }
             }
         },

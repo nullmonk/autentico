@@ -48,6 +48,7 @@ import (
 	"github.com/eugenioenko/autentico/pkg/revoke"
 	"github.com/eugenioenko/autentico/pkg/session"
 	"github.com/eugenioenko/autentico/pkg/signup"
+	"github.com/eugenioenko/autentico/pkg/ca"
 	"github.com/eugenioenko/autentico/pkg/token"
 	"github.com/eugenioenko/autentico/pkg/user"
 	"github.com/eugenioenko/autentico/pkg/userinfo"
@@ -224,6 +225,12 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("GET /admin/api/deletion-requests", adminAPI(deletion.HandleListDeletionRequests))
 	mux.Handle("POST /admin/api/deletion-requests/{id}/approve", adminAPI(deletion.HandleApproveDeletionRequest))
 	mux.Handle("DELETE /admin/api/deletion-requests/{id}", adminAPI(deletion.HandleAdminCancelDeletionRequest))
+
+	mux.Handle("GET /admin/api/certificates", adminAPI(ca.HandleListCertificates))
+	mux.Handle("POST /admin/api/certificates", adminAPI(ca.HandleGenerateUserCert))
+	mux.Handle("GET /admin/api/certificates/authorities", adminAPI(ca.HandleListAuthorities))
+	mux.Handle("GET /admin/api/certificates/{id}/bundle", adminAPI(ca.HandleDownloadUserCert))
+	mux.Handle("DELETE /admin/api/certificates/{id}", adminAPI(ca.HandleRevokeCertificate))
 
 	// -------------------------------------------------------------------------
 	// Account self-service API (audience: autentico-account or autentico-admin)
