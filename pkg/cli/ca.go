@@ -45,6 +45,11 @@ func RunCaInit(c *cli.Context) error {
 		return err
 	}
 
+	interPassword, err := promptPassword("Enter password for Intermediary CA: ")
+	if err != nil {
+		return err
+	}
+
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return err
@@ -100,10 +105,71 @@ func RunCaInit(c *cli.Context) error {
 	}
 
 	fmt.Printf("Root CA initialized successfully. ID: %s\n", cert.ID)
+
+	interAgeDays := 1095 // 3 years
+
+	interPriv, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return err
+	}
+
+	interSerialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return err
+	}
+
+	interTemplate := x509.Certificate{
+		SerialNumber: interSerialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Autentico Intermediary CA"},
+			CommonName:   "Autentico Intermediary CA",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Duration(interAgeDays) * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		MaxPathLen:            0,
+		MaxPathLenZero:        true,
+	}
+
+	interDerBytes, err := x509.CreateCertificate(rand.Reader, &interTemplate, &template, &interPriv.PublicKey, priv)
+	if err != nil {
+		return err
+	}
+
+	interCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: interDerBytes})
+
+	interPrivBytes, err := x509.MarshalPKCS8PrivateKey(interPriv)
+	if err != nil {
+		return err
+	}
+	interPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: interPrivBytes})
+
+	interEncryptedKey, err := crypto.Encrypt(interPrivPEM, interPassword)
+	if err != nil {
+		return err
+	}
+
+	interCert := ca.Certificate{
+		ID:            ca.GenerateID(),
+		Type:          "intermediary",
+		CreatedAt:     time.Now(),
+		CertPEM:       string(interCertPEM),
+		KeyCiphertext: interEncryptedKey,
+	}
+
+	if err := ca.InsertCertificate(db.GetWriteDB(), interCert); err != nil {
+		return err
+	}
+
+	fmt.Printf("Intermediary CA initialized successfully. ID: %s\n", interCert.ID)
+
 	return nil
 }
 
-func RunCaInter(c *cli.Context) error {
+func RunCaRefresh(c *cli.Context) error {
 	config.InitBootstrap()
 	if _, err := db.InitDB(config.GetBootstrap().DbFilePath); err != nil {
 		return err
@@ -155,9 +221,20 @@ func RunCaInter(c *cli.Context) error {
 		return fmt.Errorf("failed to parse root CA certificate: %w", err)
 	}
 
-	interPassword, err := promptPassword("Enter new password for Intermediary CA: ")
+	interPassword, err := promptPassword("Enter new password for new Intermediary CA: ")
 	if err != nil {
 		return err
+	}
+
+	// Revoke old intermediary
+	oldInter, err := ca.GetActiveIntermediaryCA(db.GetReadDB())
+	if err != nil {
+		return err
+	}
+	if oldInter != nil {
+		if err := ca.RevokeCertificate(db.GetWriteDB(), oldInter.ID); err != nil {
+			return err
+		}
 	}
 
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
@@ -216,7 +293,7 @@ func RunCaInter(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("Intermediary CA initialized successfully. ID: %s\n", cert.ID)
+	fmt.Printf("New Intermediary CA generated and initialized successfully. ID: %s\n", cert.ID)
 	return nil
 }
 

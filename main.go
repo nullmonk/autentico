@@ -123,8 +123,8 @@ func main() {
 						Action: appCli.RunCaInit,
 					},
 					{
-						Name:  "inter",
-						Usage: "Initialize Intermediary CA",
+						Name:  "refresh",
+						Usage: "Refresh Intermediary CA",
 						Flags: []cli.Flag{
 							&cli.IntFlag{
 								Name:  "age",
@@ -132,7 +132,7 @@ func main() {
 								Value: 1095,
 							},
 						},
-						Action: appCli.RunCaInter,
+						Action: appCli.RunCaRefresh,
 					},
 					{
 						Name:   "delete",

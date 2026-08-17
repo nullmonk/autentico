@@ -33,7 +33,11 @@ export default function CaPage() {
     onError: () => message.error("Failed to revoke certificate"),
   });
 
-  const hasIntermediary = authorities?.items.some((c) => c.type === "intermediary" && !c.revoked_at);
+  const activeIntermediary = authorities?.items.find((c) => c.type === "intermediary" && !c.revoked_at);
+  const hasIntermediary = !!activeIntermediary;
+
+  const intermediaryExpiringSoon = activeIntermediary?.expire_date &&
+    (new Date(activeIntermediary.expire_date).getTime() - Date.now() < 180 * 24 * 60 * 60 * 1000); // 180 days ~ 6mo
 
   const handleDownload = async (values: any) => {
     try {
@@ -148,13 +152,21 @@ export default function CaPage() {
     return (
       <Card>
         <Title level={4}>Certificate Authority</Title>
-        <Text type="warning">Enable CA via CLI: run `autentico ca init` followed by `autentico ca inter` to set up the Root and Intermediary CAs.</Text>
+        <Text type="warning">Enable CA via CLI: run `autentico ca init` to set up the Root and Intermediary CAs.</Text>
       </Card>
     );
   }
 
   return (
     <Space direction="vertical" style={{ width: "100%" }} size="large">
+      {intermediaryExpiringSoon && (
+        <Card style={{ borderColor: "#faad14", backgroundColor: "#fffbe6" }}>
+          <Text type="warning">
+            <StopOutlined /> The intermediary CA is expiring soon.
+            Run `autentico ca refresh` in the CLI to generate a new intermediary CA.
+          </Text>
+        </Card>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Title level={4} style={{ margin: 0 }}>Certificates</Title>
         <Button
