@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Table, Button, Space, Typography, Tag, Modal, Input, Form, message, AutoComplete } from "antd";
+import { Table, Button, Space, Typography, Tag, Modal, Input, Form, message, AutoComplete, Tooltip } from "antd";
 import { DownloadOutlined, StopOutlined, PlusOutlined } from "@ant-design/icons";
 import { listCertificates, listAuthorities, revokeCertificate, generateUserCert, downloadUserCert } from "../../api/ca";
 import { Certificate } from "../../types/ca";
@@ -84,11 +84,28 @@ export default function ClientCertificatesPage() {
     }
   };
 
+  const [, setFilters] = useState<Record<string, string[] | null>>({});
+
+  const dataSource = useMemo(() => {
+    return (certs?.items || []).filter(c => c.type === "user");
+  }, [certs]);
+
+  const uniqueUsers = useMemo(() => {
+    const users = new Set(dataSource.map(d => d.username).filter((u): u is string => Boolean(u)));
+    return Array.from(users).map(u => ({ text: u, value: u }));
+  }, [dataSource]);
+
+  const handleTableChange = (_: any, tableFilters: any) => {
+    setFilters(tableFilters);
+  };
+
   const columns = [
     {
       title: "User",
       dataIndex: "username",
       key: "username",
+      filters: uniqueUsers,
+      onFilter: (value: any, record: Certificate) => record.username === value,
     },
     {
       title: "Created At",
@@ -105,6 +122,15 @@ export default function ClientCertificatesPage() {
     {
       title: "Status",
       key: "status",
+      filters: [
+        { text: "Active", value: "active" },
+        { text: "Revoked", value: "revoked" },
+      ],
+      onFilter: (value: any, record: Certificate) => {
+        if (value === "active") return !record.revoked_at;
+        if (value === "revoked") return !!record.revoked_at;
+        return true;
+      },
       render: (_: any, record: Certificate) => (
         record.revoked_at ? <Tag color="red">Revoked</Tag> : <Tag color="green">Active</Tag>
       ),
@@ -114,32 +140,34 @@ export default function ClientCertificatesPage() {
       key: "actions",
       render: (_: any, record: Certificate) => (
         <Space>
-          <Button
-            type="text"
-            icon={<DownloadOutlined />}
-            disabled={!!record.revoked_at}
-            onClick={() => {
-              setSelectedCertId(record.id);
-              setDownloadModalOpen(true);
-            }}
-          >
-            Download
-          </Button>
-          <Button
-            type="text"
-            danger
-            icon={<StopOutlined />}
-            disabled={!!record.revoked_at}
-            onClick={() => {
-              Modal.confirm({
-                title: "Revoke Certificate?",
-                content: "Are you sure you want to revoke this certificate? This action cannot be undone.",
-                onOk: () => revokeMutation.mutate(record.id),
-              });
-            }}
-          >
-            Revoke
-          </Button>
+          <Tooltip title="Download">
+            <Button
+              type="text"
+              size="small"
+              icon={<DownloadOutlined />}
+              disabled={!!record.revoked_at}
+              onClick={() => {
+                setSelectedCertId(record.id);
+                setDownloadModalOpen(true);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="Revoke">
+            <Button
+              type="text"
+              danger
+              size="small"
+              icon={<StopOutlined />}
+              disabled={!!record.revoked_at}
+              onClick={() => {
+                Modal.confirm({
+                  title: "Revoke Certificate?",
+                  content: "Are you sure you want to revoke this certificate? This action cannot be undone.",
+                  onOk: () => revokeMutation.mutate(record.id),
+                });
+              }}
+            />
+          </Tooltip>
         </Space>
       ),
     },
@@ -162,11 +190,12 @@ export default function ClientCertificatesPage() {
       </div>
 
       <Table
-        dataSource={(certs?.items || []).filter(c => c.type === "user")}
+        dataSource={dataSource}
         columns={columns}
         rowKey="id"
         loading={loadingCerts || loadingAuth}
         scroll={{ x: true }}
+        onChange={handleTableChange}
       />
 
       <Modal
