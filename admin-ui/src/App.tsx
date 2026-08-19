@@ -38,6 +38,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ClientsPage = lazy(() => import("./pages/ClientsPage"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 const SessionsPage = lazy(() => import("./pages/SessionsPage"));
+const ApiTokensPage = lazy(() => import("./pages/ApiTokensPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const CorsPage = lazy(() => import("./pages/CorsPage"));
 const FederationPage = lazy(() => import("./pages/FederationPage"));
@@ -118,6 +119,7 @@ function ThemedApp() {
                   <Route path="groups" element={<GroupsPage />} />
                   <Route path="sessions" element={<SessionsPage />} />
                   <Route path="tokens" element={<TokensPage />} />
+                  <Route path="api-tokens" element={<ApiTokensPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="cors" element={<CorsPage />} />
                   <Route path="federation" element={<FederationPage />} />

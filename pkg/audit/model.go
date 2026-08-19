@@ -26,6 +26,7 @@ const (
 	TargetClient   TargetType = "client"
 	TargetSession  TargetType = "session"
 	TargetToken      TargetType = "token"
+	TargetApiToken   TargetType = "api_token"
 	TargetSettings   TargetType = "settings"
 	TargetFederation TargetType = "federation"
 )
@@ -93,6 +94,8 @@ const (
 	EventClientCreated          Event = "client_created"
 	EventClientUpdated          Event = "client_updated"
 	EventClientDeleted          Event = "client_deleted"
+	EventApiTokenCreated        Event = "api_token_created"
+	EventApiTokenRevoked        Event = "api_token_revoked"
 	EventSettingsUpdated        Event = "settings_updated"
 	EventSettingsImported       Event = "settings_imported"
 	EventFederationCreated     Event = "federation_created"
