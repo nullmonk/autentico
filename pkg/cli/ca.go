@@ -97,12 +97,14 @@ func RunCaInit(c *cli.Context) error {
 		return err
 	}
 
+	expireDate := template.NotAfter
 	cert := ca.Certificate{
 		ID:            ca.GenerateID(),
 		Type:          "ca",
 		CreatedAt:     time.Now(),
 		CertPEM:       string(certPEM),
 		KeyCiphertext: encryptedKey,
+		ExpireDate:    &expireDate,
 	}
 
 	if err := ca.InsertCertificate(db.GetWriteDB(), cert); err != nil {

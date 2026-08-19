@@ -15,10 +15,10 @@ func InsertCertificate(db *sql.DB, cert Certificate) error {
 }
 
 func GetActiveRootCA(db *sql.DB) (*Certificate, error) {
-	row := db.QueryRow("SELECT id, type, created_at, revoked_at, cert_pem, key_ciphertext FROM certificates WHERE type = 'ca' AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1")
+	row := db.QueryRow("SELECT id, type, created_at, revoked_at, cert_pem, key_ciphertext, expire_date FROM certificates WHERE type = 'ca' AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1")
 	var cert Certificate
-	var revokedAt sql.NullTime
-	err := row.Scan(&cert.ID, &cert.Type, &cert.CreatedAt, &revokedAt, &cert.CertPEM, &cert.KeyCiphertext)
+	var revokedAt, expireDate sql.NullTime
+	err := row.Scan(&cert.ID, &cert.Type, &cert.CreatedAt, &revokedAt, &cert.CertPEM, &cert.KeyCiphertext, &expireDate)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -27,6 +27,9 @@ func GetActiveRootCA(db *sql.DB) (*Certificate, error) {
 	}
 	if revokedAt.Valid {
 		cert.RevokedAt = &revokedAt.Time
+	}
+	if expireDate.Valid {
+		cert.ExpireDate = &expireDate.Time
 	}
 	return &cert, nil
 }
