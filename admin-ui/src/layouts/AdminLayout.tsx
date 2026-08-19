@@ -31,6 +31,7 @@ const menuItems: any[] = [
   { key: "/groups", icon: <TeamOutlined />, label: "Groups" },
   { key: "/sessions", icon: <DesktopOutlined />, label: "Sessions" },
   { key: "/tokens", icon: <KeyOutlined />, label: "Tokens" },
+  { key: "/api-tokens", icon: <ApiOutlined />, label: "API Tokens" },
   { key: "/clients", icon: <AppstoreOutlined />, label: "Clients" },
   { key: "/federation", icon: <GlobalOutlined />, label: "Federation" },
   { key: "/audit-log", icon: <FileSearchOutlined />, label: "Audit Log" },

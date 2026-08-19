@@ -11,14 +11,18 @@ import (
 
 type AccessTokenClaims struct {
 	ZeroClaims
-	UserID    string   `json:"sub"`
-	Email     string   `json:"email"`
-	SessionID string   `json:"sid"`
-	IssuedAt  int64    `json:"iat"`
-	ExpiresAt int64    `json:"exp"`
-	Audience  []string `json:"aud"`
-	Issuer    string   `json:"iss"`
-	Scope     string   `json:"scope"`
+	ID                string   `json:"jti,omitempty"`
+	UserID            string   `json:"sub"`
+	Email             string   `json:"email"`
+	PreferredUsername string   `json:"preferred_username,omitempty"`
+	SessionID         string   `json:"sid"`
+	IssuedAt          int64    `json:"iat"`
+	ExpiresAt         int64    `json:"exp"`
+	Audience          []string `json:"aud"`
+	Issuer            string   `json:"iss"`
+	Scope             string   `json:"scope"`
+	Role              string   `json:"role,omitempty"`
+	Routes            []string `json:"routes,omitempty"`
 }
 
 func (a *AccessTokenClaims) GetExpirationTime() (*jwt.NumericDate, error) {
