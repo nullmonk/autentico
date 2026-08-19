@@ -28,7 +28,7 @@ export function useApiTokens(params: ListParams) {
   return useQuery({
     queryKey: ["api-tokens", params],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: ListResponse<ApiToken> }>("/api-tokens", {
+      const { data } = await apiClient.get<{ data: ListResponse<ApiToken> }>("/admin/api/api-tokens", {
         params,
       });
       return data.data;
@@ -40,7 +40,7 @@ export function useCreateApiToken() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (req: CreateApiTokenRequest) => {
-      const { data } = await apiClient.post<{ data: CreateApiTokenResponse }>("/api-tokens", req);
+      const { data } = await apiClient.post<{ data: CreateApiTokenResponse }>("/admin/api/api-tokens", req);
       return data.data;
     },
     onSuccess: () => {
@@ -53,7 +53,7 @@ export function useRevokeApiToken() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await apiClient.delete(`/api-tokens/${id}`);
+      await apiClient.delete(`/admin/api/api-tokens/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["api-tokens"] });
