@@ -32,3 +32,8 @@ type CreateApiTokenResponse struct {
 type ApiTokenListResponse struct {
 	model.ListResponse[ApiToken]
 }
+
+type AvailableRoute struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
+}

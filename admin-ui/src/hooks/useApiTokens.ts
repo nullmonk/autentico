@@ -24,6 +24,11 @@ export interface CreateApiTokenResponse {
   expires_at: string;
 }
 
+export interface AvailableRoute {
+  method: string;
+  path: string;
+}
+
 export function useApiTokens(params: ListParams) {
   return useQuery({
     queryKey: ["api-tokens", params],
@@ -31,6 +36,16 @@ export function useApiTokens(params: ListParams) {
       const { data } = await apiClient.get<{ data: ListResponse<ApiToken> }>("/admin/api/api-tokens", {
         params,
       });
+      return data.data;
+    },
+  });
+}
+
+export function useAvailableRoutes() {
+  return useQuery({
+    queryKey: ["api-tokens-routes"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: AvailableRoute[] }>("/admin/api/api-tokens/routes");
       return data.data;
     },
   });

@@ -219,6 +219,7 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("POST /admin/api/api-tokens", adminAPI(apitoken.HandleCreateApiToken))
 	mux.Handle("GET /admin/api/api-tokens", adminAPI(apitoken.HandleListApiTokens))
 	mux.Handle("DELETE /admin/api/api-tokens/{id}", adminAPI(apitoken.HandleRevokeApiToken))
+	mux.Handle("GET /admin/api/api-tokens/routes", adminAPI(apitoken.HandleListAvailableRoutes))
 
 	mux.Handle("GET /admin/api/stats", adminAPI(admin.HandleStats))
 	mux.Handle("GET /admin/api/settings", adminAPI(appsettings.HandleGetSettings))

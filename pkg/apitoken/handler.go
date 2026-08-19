@@ -95,6 +95,72 @@ func HandleCreateApiToken(w http.ResponseWriter, r *http.Request) {
 	utils.SuccessResponse(w, res, http.StatusOK)
 }
 
+// AvailableAdminRoutes is a hardcoded list of all known API routes
+// until Go 1.22's mux allows introspection.
+var AvailableAdminRoutes = []AvailableRoute{
+	{Method: "GET", Path: "/admin/api/users"},
+	{Method: "POST", Path: "/admin/api/users"},
+	{Method: "GET", Path: "/admin/api/users/{id}"},
+	{Method: "PUT", Path: "/admin/api/users/{id}"},
+	{Method: "DELETE", Path: "/admin/api/users/{id}"},
+	{Method: "POST", Path: "/admin/api/users/{id}/deactivate"},
+	{Method: "POST", Path: "/admin/api/users/{id}/reactivate"},
+	{Method: "POST", Path: "/admin/api/users/{id}/unlock"},
+	{Method: "POST", Path: "/admin/api/users/{id}/revoke-sessions"},
+	{Method: "POST", Path: "/admin/api/users/lookup"},
+	{Method: "GET", Path: "/admin/api/clients"},
+	{Method: "POST", Path: "/admin/api/clients"},
+	{Method: "GET", Path: "/admin/api/clients/{client_id}"},
+	{Method: "PUT", Path: "/admin/api/clients/{client_id}"},
+	{Method: "DELETE", Path: "/admin/api/clients/{client_id}"},
+	{Method: "GET", Path: "/admin/api/sessions"},
+	{Method: "DELETE", Path: "/admin/api/sessions/{id}"},
+	{Method: "GET", Path: "/admin/api/idp-sessions"},
+	{Method: "GET", Path: "/admin/api/users/{id}/idp-sessions"},
+	{Method: "GET", Path: "/admin/api/idp-sessions/{id}/sessions"},
+	{Method: "DELETE", Path: "/admin/api/idp-sessions/{id}"},
+	{Method: "GET", Path: "/admin/api/federation"},
+	{Method: "POST", Path: "/admin/api/federation"},
+	{Method: "GET", Path: "/admin/api/federation/{id}"},
+	{Method: "PUT", Path: "/admin/api/federation/{id}"},
+	{Method: "DELETE", Path: "/admin/api/federation/{id}"},
+	{Method: "GET", Path: "/admin/api/groups"},
+	{Method: "POST", Path: "/admin/api/groups"},
+	{Method: "GET", Path: "/admin/api/groups/{id}"},
+	{Method: "PUT", Path: "/admin/api/groups/{id}"},
+	{Method: "DELETE", Path: "/admin/api/groups/{id}"},
+	{Method: "GET", Path: "/admin/api/groups/{id}/members"},
+	{Method: "POST", Path: "/admin/api/groups/{id}/members"},
+	{Method: "DELETE", Path: "/admin/api/groups/{id}/members/{user_id}"},
+	{Method: "GET", Path: "/admin/api/users/{id}/groups"},
+	{Method: "GET", Path: "/admin/api/tokens"},
+	{Method: "DELETE", Path: "/admin/api/tokens/{id}"},
+	{Method: "POST", Path: "/admin/api/api-tokens"},
+	{Method: "GET", Path: "/admin/api/api-tokens"},
+	{Method: "DELETE", Path: "/admin/api/api-tokens/{id}"},
+	{Method: "GET", Path: "/admin/api/api-tokens/routes"},
+	{Method: "GET", Path: "/admin/api/stats"},
+	{Method: "GET", Path: "/admin/api/settings"},
+	{Method: "PUT", Path: "/admin/api/settings"},
+	{Method: "POST", Path: "/admin/api/settings/test-smtp"},
+	{Method: "GET", Path: "/admin/api/settings/export"},
+	{Method: "POST", Path: "/admin/api/settings/import/preview"},
+	{Method: "POST", Path: "/admin/api/settings/import/apply"},
+	{Method: "GET", Path: "/admin/api/audit-logs"},
+	{Method: "GET", Path: "/admin/api/deletion-requests"},
+	{Method: "POST", Path: "/admin/api/deletion-requests/{id}/approve"},
+	{Method: "DELETE", Path: "/admin/api/deletion-requests/{id}"},
+	{Method: "GET", Path: "/admin/api/certificates"},
+	{Method: "POST", Path: "/admin/api/certificates"},
+	{Method: "GET", Path: "/admin/api/certificates/authorities"},
+	{Method: "GET", Path: "/admin/api/certificates/{id}/bundle"},
+	{Method: "DELETE", Path: "/admin/api/certificates/{id}"},
+}
+
+func HandleListAvailableRoutes(w http.ResponseWriter, r *http.Request) {
+	utils.SuccessResponse(w, AvailableAdminRoutes, http.StatusOK)
+}
+
 func HandleListApiTokens(w http.ResponseWriter, r *http.Request) {
 	params := api.ParseListParams(r)
 

@@ -23,6 +23,7 @@ import {
   useApiTokens,
   useRevokeApiToken,
   useCreateApiToken,
+  useAvailableRoutes,
   type ApiToken,
   type CreateApiTokenRequest,
 } from "../hooks/useApiTokens";
@@ -52,6 +53,7 @@ export default function ApiTokensPage() {
   const { data, isLoading, error } = useApiTokens(listParams);
   const revoke = useRevokeApiToken();
   const create = useCreateApiToken();
+  const { data: availableRoutes } = useAvailableRoutes();
 
   const [createVisible, setCreateVisible] = useState(false);
   const [form] = Form.useForm();
@@ -316,15 +318,10 @@ export default function ApiTokensPage() {
               mode="tags"
               style={{ width: "100%" }}
               placeholder="e.g. /admin/api/users:GET"
-              options={[
-                { value: "/admin/api/users:GET", label: "/admin/api/users (GET)" },
-                { value: "/admin/api/users:POST", label: "/admin/api/users (POST)" },
-                { value: "/admin/api/groups:GET", label: "/admin/api/groups (GET)" },
-                { value: "/admin/api/groups:POST", label: "/admin/api/groups (POST)" },
-                { value: "/admin/api/groups:DELETE", label: "/admin/api/groups (DELETE)" },
-                { value: "/admin/api/tokens:GET", label: "/admin/api/tokens (GET)" },
-                { value: "/admin/api/tokens:DELETE", label: "/admin/api/tokens (DELETE)" },
-              ]}
+              options={availableRoutes?.map(r => ({
+                value: `${r.path}:${r.method}`,
+                label: `${r.path} (${r.method})`
+              })) || []}
             />
           </Form.Item>
         </Form>
