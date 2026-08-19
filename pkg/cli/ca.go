@@ -50,9 +50,9 @@ func RunCaInit(c *cli.Context) error {
 		return err
 	}
 
-	serverInterPassword, err := promptPassword("Enter password for Server Intermediary CA: ")
-	if err != nil {
-		return err
+	serverInterPassword := config.GetBootstrap().DbAesKey
+	if serverInterPassword == "" {
+		return fmt.Errorf("DB AES key not configured")
 	}
 
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
@@ -382,9 +382,9 @@ func RunCaRefresh(c *cli.Context) error {
 	}
 
 	if refreshServer {
-		serverInterPassword, err := promptPassword("Enter new password for new Server Intermediary CA: ")
-		if err != nil {
-			return err
+		serverInterPassword := config.GetBootstrap().DbAesKey
+		if serverInterPassword == "" {
+			return fmt.Errorf("DB AES key not configured")
 		}
 
 		if serverInter != nil {

@@ -13,8 +13,7 @@ export default function CaPage() {
   });
 
 
-  const legacyIntermediary = authorities?.items.find((c) => c.type === "intermediary" && !c.revoked_at);
-  const clientIntermediary = authorities?.items.find((c) => c.type === "client-int" && !c.revoked_at) || legacyIntermediary;
+  const clientIntermediary = authorities?.items.find((c) => c.type === "client-int" && !c.revoked_at);
   const serverIntermediary = authorities?.items.find((c) => c.type === "server-int" && !c.revoked_at);
 
   const hasIntermediary = !!clientIntermediary || !!serverIntermediary;

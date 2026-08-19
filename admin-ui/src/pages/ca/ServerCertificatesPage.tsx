@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Table, Button, Space, Typography, Tag, Modal, Input, Form, message, Tooltip, Select } from "antd";
+import { Table, Button, Space, Typography, Tag, Modal, Form, message, Tooltip, Select } from "antd";
 import { StopOutlined, PlusOutlined } from "@ant-design/icons";
 import { listCertificates, listAuthorities, revokeCertificate, generateServerCert } from "../../api/ca";
 import { Certificate } from "../../types/ca";
@@ -39,7 +39,7 @@ export default function ServerCertificatesPage() {
         return;
       }
 
-      await generateServerCert(values.hosts, activeIntermediary.id, values.interPassword);
+      await generateServerCert(values.hosts, activeIntermediary.id, ""); // Backend manages server inter password
       setGenerateModalOpen(false);
       form.resetFields();
       queryClient.invalidateQueries({ queryKey: ["ca-certificates"] });
@@ -166,13 +166,6 @@ export default function ServerCertificatesPage() {
             tooltip="Press enter to add multiple hosts. The first one will be the Common Name (CN), all will be added as SANs."
           >
             <Select mode="tags" style={{ width: '100%' }} placeholder="example.com, api.example.com" />
-          </Form.Item>
-          <Form.Item
-            name="interPassword"
-            label="Server Intermediary CA Password"
-            rules={[{ required: true, message: "Please enter the Server Intermediary CA password" }]}
-          >
-            <Input.Password />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">Generate</Button>

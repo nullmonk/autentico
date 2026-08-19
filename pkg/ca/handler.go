@@ -238,13 +238,13 @@ func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aesKey := config.GetBootstrap().DbAesKey
-	if aesKey == "" {
+	aesKeyUser := config.GetBootstrap().DbAesKey
+	if aesKeyUser == "" {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "DB AES key not configured")
 		return
 	}
 
-	encryptedKey, err := crypto.EncryptWithKey(privBytes, aesKey)
+	encryptedKey, err := crypto.EncryptWithKey(privBytes, aesKeyUser)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to encrypt user key")
 		return
@@ -286,7 +286,7 @@ func HandleGenerateServerCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.IntermediaryPassword == "" || req.IntermediaryID == "" || len(req.Hosts) == 0 {
+	if req.IntermediaryID == "" || len(req.Hosts) == 0 {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Missing required fields")
 		return
 	}
@@ -305,7 +305,13 @@ func HandleGenerateServerCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	interPrivPEM, err := crypto.Decrypt(interCertRec.KeyCiphertext, req.IntermediaryPassword)
+	aesKey := config.GetBootstrap().DbAesKey
+	if aesKey == "" {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "DB AES key not configured")
+		return
+	}
+
+	interPrivPEM, err := crypto.Decrypt(interCertRec.KeyCiphertext, aesKey)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusForbidden, "access_denied", "Failed to decrypt intermediary CA key (wrong password?)")
 		return
@@ -384,12 +390,6 @@ func HandleGenerateServerCert(w http.ResponseWriter, r *http.Request) {
 	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to marshal server key")
-		return
-	}
-
-	aesKey := config.GetBootstrap().DbAesKey
-	if aesKey == "" {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "DB AES key not configured")
 		return
 	}
 
