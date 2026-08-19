@@ -1,6 +1,8 @@
-import { Drawer, Form, Input, Select, Button, Space, App } from "antd";
+import { useState } from "react";
+import { Drawer, Form, Input, Select, Button, Space, App, Checkbox } from "antd";
+import { useQuery } from "@tanstack/react-query";
 import { useCreateUser } from "../../hooks/useUsers";
-import type { UserCreateRequest } from "../../types/user";
+import { listAuthorities, generateUserCert } from "../../api/ca";
 
 interface UserCreateFormProps {
   open: boolean;
@@ -19,12 +21,38 @@ export default function UserCreateForm({
   const { message } = App.useApp();
   const [form] = Form.useForm();
   const createUser = useCreateUser();
+  const [generateCert, setGenerateCert] = useState(false);
 
-  const handleSubmit = async (values: UserCreateRequest) => {
+  const { data: authorities } = useQuery({
+    queryKey: ["ca-authorities"],
+    queryFn: listAuthorities,
+  });
+
+  const activeIntermediary = authorities?.items.find((c) => c.type === "intermediary" && !c.revoked_at);
+
+  const handleSubmit = async (values: any) => {
     try {
-      await createUser.mutateAsync(values);
-      message.success("User created successfully");
+      await createUser.mutateAsync({
+        username: values.username,
+        password: values.password,
+        email: values.email,
+        role: values.role,
+      });
+
+      if (generateCert && activeIntermediary && values.interPassword) {
+        try {
+          await generateUserCert(values.username, activeIntermediary.id, values.interPassword);
+          message.success("User and certificate created successfully");
+        } catch (certErr: any) {
+          const msg = certErr.response?.data?.error?.error_description || "Failed to generate certificate";
+          message.error(`User created, but certificate generation failed: ${msg}`);
+        }
+      } else {
+        message.success("User created successfully");
+      }
+
       form.resetFields();
+      setGenerateCert(false);
       onClose();
     } catch {
       message.error("Failed to create user");
@@ -86,6 +114,29 @@ export default function UserCreateForm({
         <Form.Item name="role" label="Role">
           <Select options={ROLE_OPTIONS} />
         </Form.Item>
+
+        {activeIntermediary && (
+          <>
+            <Form.Item>
+              <Checkbox
+                checked={generateCert}
+                onChange={(e) => setGenerateCert(e.target.checked)}
+              >
+                Generate User Certificate
+              </Checkbox>
+            </Form.Item>
+
+            {generateCert && (
+              <Form.Item
+                name="interPassword"
+                label="Intermediary CA Password"
+                rules={[{ required: true, message: "Please enter the Intermediary CA password" }]}
+              >
+                <Input.Password />
+              </Form.Item>
+            )}
+          </>
+        )}
       </Form>
     </Drawer>
   );

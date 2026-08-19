@@ -35,6 +35,7 @@ type BootstrapConfig struct {
 	AuthAccessTokenSecret          string
 	AuthRefreshTokenSecret         string
 	AuthCSRFProtectionSecretKey    string
+	DbAesKey                       string
 	AuthCSRFSecureCookie           bool
 	AuthJwkCertKeyID               string
 	AuthRefreshTokenCookieName string
@@ -239,6 +240,7 @@ var (
 		AuthAccessTokenSecret:          "",
 		AuthRefreshTokenSecret:         "",
 		AuthCSRFProtectionSecretKey:    "",
+		DbAesKey:                       "",
 		AuthCSRFSecureCookie:           false,
 		AuthJwkCertKeyID:               "autentico-key-1",
 		AuthRefreshTokenCookieName: "autentico_refresh_token",
@@ -308,6 +310,7 @@ func InitBootstrap() {
 		AuthAccessTokenSecret:          getEnv("AUTENTICO_ACCESS_TOKEN_SECRET", ""),
 		AuthRefreshTokenSecret:         getEnv("AUTENTICO_REFRESH_TOKEN_SECRET", ""),
 		AuthCSRFProtectionSecretKey:    getEnv("AUTENTICO_CSRF_SECRET_KEY", ""),
+		DbAesKey:                       getEnv("AUTENTICO_DB_AES_KEY", ""),
 		AuthCSRFSecureCookie:           getEnvBool("AUTENTICO_CSRF_SECURE_COOKIE", true),
 		PrivateKeyBase64:               getEnv("AUTENTICO_PRIVATE_KEY", ""),
 		AuthJwkCertKeyID:               getEnv("AUTENTICO_JWK_CERT_KEY_ID", "autentico-key-1"),

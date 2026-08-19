@@ -107,6 +107,41 @@ func main() {
 				Action: appCli.RunMigrate,
 			},
 			{
+				Name:  "ca",
+				Usage: "Certificate Authority operations",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "init",
+						Usage: "Initialize Root CA",
+						Flags: []cli.Flag{
+							&cli.IntFlag{
+								Name:  "age",
+								Usage: "Age of Root CA in days",
+								Value: 3650,
+							},
+						},
+						Action: appCli.RunCaInit,
+					},
+					{
+						Name:  "refresh",
+						Usage: "Refresh Intermediary CA",
+						Flags: []cli.Flag{
+							&cli.IntFlag{
+								Name:  "age",
+								Usage: "Age of Intermediary CA in days",
+								Value: 1095,
+							},
+						},
+						Action: appCli.RunCaRefresh,
+					},
+					{
+						Name:   "delete",
+						Usage:  "Delete all certificates",
+						Action: appCli.RunCaDelete,
+					},
+				},
+			},
+			{
 				Name:  "onboard",
 				Usage: "Create the first admin account (headless alternative to /onboard)",
 				Flags: []cli.Flag{
