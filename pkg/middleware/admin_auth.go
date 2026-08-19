@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/eugenioenko/autentico/pkg/config"
+	"github.com/eugenioenko/autentico/pkg/db"
 	"github.com/eugenioenko/autentico/pkg/jwtutil"
 	"github.com/eugenioenko/autentico/pkg/session"
 	"github.com/eugenioenko/autentico/pkg/token"
@@ -48,6 +49,54 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 		if err := jwtutil.ValidateAudience(claims.Audience, []string{config.AdminClientID}); err != nil {
 			slog.Warn("admin_auth: token not issued for admin API", "aud", claims.Audience, "ip", utils.GetClientIP(r))
 			utils.WriteErrorResponse(w, http.StatusForbidden, "forbidden", "Token not issued for admin API")
+			return
+		}
+
+		// Handle custom API tokens
+		if claims.Role == "api" {
+			var exists bool
+			err := db.GetDB().QueryRow(`SELECT EXISTS(SELECT 1 FROM api_tokens WHERE id = ?)`, claims.ID).Scan(&exists)
+			if err != nil || !exists {
+				slog.Warn("admin_auth: api token not found or revoked", "token_id", claims.ID, "ip", utils.GetClientIP(r))
+				utils.WriteBearerUnauthorized(w, realm, "invalid_token", "API token has been revoked or does not exist")
+				return
+			}
+
+			// Verify requested path against scopes
+			matched := false
+			for _, route := range claims.Routes {
+				parts := strings.SplitN(route, ":", 2)
+				if len(parts) == 2 {
+					routePath := parts[0]
+					routeMethod := parts[1]
+
+					if r.Method == routeMethod && strings.HasPrefix(r.URL.Path, routePath) {
+						matched = true
+						break
+					}
+				}
+			}
+
+			if !matched {
+				slog.Warn("admin_auth: api token route mismatch", "token_id", claims.ID, "path", r.URL.Path, "method", r.Method, "ip", utils.GetClientIP(r))
+				utils.WriteErrorResponse(w, http.StatusForbidden, "forbidden", "API token does not have access to this route")
+				return
+			}
+
+			// For API tokens, we populate the AuthInfo with the token's original creator (which is an admin),
+			// but we skip the session/token table checks since this token does not correspond to an interactive session.
+			usr, err := user.UserByID(claims.UserID)
+			if err != nil {
+				utils.WriteBearerUnauthorized(w, realm, "invalid_token", "User not found")
+				return
+			}
+
+			r = setAuthInfo(r, &AuthInfo{
+				User:    usr,
+				Token:   tokenString,
+				Claims:  claims,
+			})
+			next.ServeHTTP(w, r)
 			return
 		}
 

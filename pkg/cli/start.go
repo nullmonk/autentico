@@ -17,6 +17,7 @@ import (
 	"github.com/eugenioenko/autentico/docs"
 	"github.com/eugenioenko/autentico/pkg/account"
 	"github.com/eugenioenko/autentico/pkg/admin"
+	"github.com/eugenioenko/autentico/pkg/apitoken"
 	"github.com/eugenioenko/autentico/pkg/appsettings"
 	"github.com/eugenioenko/autentico/pkg/audit"
 	"github.com/eugenioenko/autentico/pkg/authorize"
@@ -214,6 +215,11 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("GET /admin/api/users/{id}/groups", adminAPI(group.HandleGetUserGroups))
 	mux.Handle("GET /admin/api/tokens", adminAPI(token.HandleListTokens))
 	mux.Handle("DELETE /admin/api/tokens/{id}", adminAPI(token.HandleRevokeToken))
+
+	mux.Handle("POST /admin/api/api-tokens", adminAPI(apitoken.HandleCreateApiToken))
+	mux.Handle("GET /admin/api/api-tokens", adminAPI(apitoken.HandleListApiTokens))
+	mux.Handle("DELETE /admin/api/api-tokens/{id}", adminAPI(apitoken.HandleRevokeApiToken))
+
 	mux.Handle("GET /admin/api/stats", adminAPI(admin.HandleStats))
 	mux.Handle("GET /admin/api/settings", adminAPI(appsettings.HandleGetSettings))
 	mux.Handle("PUT /admin/api/settings", adminAPI(appsettings.HandlePutSettings))
