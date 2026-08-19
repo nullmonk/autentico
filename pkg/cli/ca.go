@@ -37,7 +37,7 @@ func RunCaInit(c *cli.Context) error {
 
 	ageDays := c.Int("age")
 	if ageDays <= 0 {
-		ageDays = 3650 // 10 years
+		ageDays = 10950 // 30 years
 	}
 
 	password, err := promptPassword("Enter master password for Root CA: ")
@@ -45,7 +45,12 @@ func RunCaInit(c *cli.Context) error {
 		return err
 	}
 
-	interPassword, err := promptPassword("Enter password for Intermediary CA: ")
+	clientInterPassword, err := promptPassword("Enter password for Client Intermediary CA: ")
+	if err != nil {
+		return err
+	}
+
+	serverInterPassword, err := promptPassword("Enter password for Server Intermediary CA: ")
 	if err != nil {
 		return err
 	}
@@ -106,65 +111,129 @@ func RunCaInit(c *cli.Context) error {
 
 	fmt.Printf("Root CA initialized successfully. ID: %s\n", cert.ID)
 
-	interAgeDays := 1095 // 3 years
+	interAgeDays := 1825 // 5 years
 
-	interPriv, err := rsa.GenerateKey(rand.Reader, 4096)
+	// Generate Client Intermediary
+	clientInterPriv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return err
 	}
 
-	interSerialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	clientInterSerialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
 		return err
 	}
 
-	interTemplate := x509.Certificate{
-		SerialNumber: interSerialNumber,
+	clientInterTemplate := x509.Certificate{
+		SerialNumber: clientInterSerialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"Autentico Intermediary CA"},
-			CommonName:   "Autentico Intermediary CA",
+			Organization: []string{"Autentico Client Intermediary CA"},
+			CommonName:   "Autentico Client Intermediary CA",
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().Add(time.Duration(interAgeDays) * 24 * time.Hour),
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 		MaxPathLen:            0,
 		MaxPathLenZero:        true,
 	}
 
-	interDerBytes, err := x509.CreateCertificate(rand.Reader, &interTemplate, &template, &interPriv.PublicKey, priv)
+	clientInterDerBytes, err := x509.CreateCertificate(rand.Reader, &clientInterTemplate, &template, &clientInterPriv.PublicKey, priv)
 	if err != nil {
 		return err
 	}
 
-	interCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: interDerBytes})
+	clientInterCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: clientInterDerBytes})
 
-	interPrivBytes, err := x509.MarshalPKCS8PrivateKey(interPriv)
+	clientInterPrivBytes, err := x509.MarshalPKCS8PrivateKey(clientInterPriv)
 	if err != nil {
 		return err
 	}
-	interPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: interPrivBytes})
+	clientInterPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: clientInterPrivBytes})
 
-	interEncryptedKey, err := crypto.Encrypt(interPrivPEM, interPassword)
+	clientInterEncryptedKey, err := crypto.Encrypt(clientInterPrivPEM, clientInterPassword)
 	if err != nil {
 		return err
 	}
 
-	interCert := ca.Certificate{
+	clientInterExpire := clientInterTemplate.NotAfter
+	clientInterCert := ca.Certificate{
 		ID:            ca.GenerateID(),
-		Type:          "intermediary",
+		Type:          "client-int",
 		CreatedAt:     time.Now(),
-		CertPEM:       string(interCertPEM),
-		KeyCiphertext: interEncryptedKey,
+		CertPEM:       string(clientInterCertPEM),
+		KeyCiphertext: clientInterEncryptedKey,
+		ExpireDate:    &clientInterExpire,
 	}
 
-	if err := ca.InsertCertificate(db.GetWriteDB(), interCert); err != nil {
+	if err := ca.InsertCertificate(db.GetWriteDB(), clientInterCert); err != nil {
 		return err
 	}
 
-	fmt.Printf("Intermediary CA initialized successfully. ID: %s\n", interCert.ID)
+	fmt.Printf("Client Intermediary CA initialized successfully. ID: %s\n", clientInterCert.ID)
+
+	// Generate Server Intermediary
+	serverInterPriv, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return err
+	}
+
+	serverInterSerialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return err
+	}
+
+	serverInterTemplate := x509.Certificate{
+		SerialNumber: serverInterSerialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Autentico Server Intermediary CA"},
+			CommonName:   "Autentico Server Intermediary CA",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Duration(interAgeDays) * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		MaxPathLen:            0,
+		MaxPathLenZero:        true,
+	}
+
+	serverInterDerBytes, err := x509.CreateCertificate(rand.Reader, &serverInterTemplate, &template, &serverInterPriv.PublicKey, priv)
+	if err != nil {
+		return err
+	}
+
+	serverInterCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverInterDerBytes})
+
+	serverInterPrivBytes, err := x509.MarshalPKCS8PrivateKey(serverInterPriv)
+	if err != nil {
+		return err
+	}
+	serverInterPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: serverInterPrivBytes})
+
+	serverInterEncryptedKey, err := crypto.Encrypt(serverInterPrivPEM, serverInterPassword)
+	if err != nil {
+		return err
+	}
+
+	serverInterExpire := serverInterTemplate.NotAfter
+	serverInterCert := ca.Certificate{
+		ID:            ca.GenerateID(),
+		Type:          "server-int",
+		CreatedAt:     time.Now(),
+		CertPEM:       string(serverInterCertPEM),
+		KeyCiphertext: serverInterEncryptedKey,
+		ExpireDate:    &serverInterExpire,
+	}
+
+	if err := ca.InsertCertificate(db.GetWriteDB(), serverInterCert); err != nil {
+		return err
+	}
+
+	fmt.Printf("Server Intermediary CA initialized successfully. ID: %s\n", serverInterCert.ID)
 
 	return nil
 }
@@ -178,7 +247,7 @@ func RunCaRefresh(c *cli.Context) error {
 
 	ageDays := c.Int("age")
 	if ageDays <= 0 {
-		ageDays = 1095 // 3 years
+		ageDays = 1825 // 5 years
 	}
 
 	caCertRec, err := ca.GetActiveRootCA(db.GetReadDB())
@@ -187,6 +256,23 @@ func RunCaRefresh(c *cli.Context) error {
 	}
 	if caCertRec == nil {
 		return fmt.Errorf("no active Root CA found. Run 'autentico ca init' first.")
+	}
+
+	clientInter, err := ca.GetActiveIntermediaryCA(db.GetReadDB(), "client-int")
+	if err != nil {
+		return err
+	}
+	serverInter, err := ca.GetActiveIntermediaryCA(db.GetReadDB(), "server-int")
+	if err != nil {
+		return err
+	}
+
+	refreshClient := clientInter == nil || (clientInter.ExpireDate != nil && time.Until(*clientInter.ExpireDate) < 365*24*time.Hour)
+	refreshServer := serverInter == nil || (serverInter.ExpireDate != nil && time.Until(*serverInter.ExpireDate) < 365*24*time.Hour)
+
+	if !refreshClient && !refreshServer {
+		fmt.Println("No intermediary CA needs to be refreshed (both have > 1 year remaining).")
+		return nil
 	}
 
 	rootPassword, err := promptPassword("Enter master password for Root CA: ")
@@ -221,79 +307,154 @@ func RunCaRefresh(c *cli.Context) error {
 		return fmt.Errorf("failed to parse root CA certificate: %w", err)
 	}
 
-	interPassword, err := promptPassword("Enter new password for new Intermediary CA: ")
-	if err != nil {
-		return err
-	}
-
-	// Revoke old intermediary
-	oldInter, err := ca.GetActiveIntermediaryCA(db.GetReadDB())
-	if err != nil {
-		return err
-	}
-	if oldInter != nil {
-		if err := ca.RevokeCertificate(db.GetWriteDB(), oldInter.ID); err != nil {
+	if refreshClient {
+		clientInterPassword, err := promptPassword("Enter new password for new Client Intermediary CA: ")
+		if err != nil {
 			return err
 		}
+
+		if clientInter != nil {
+			if err := ca.RevokeCertificate(db.GetWriteDB(), clientInter.ID); err != nil {
+				return err
+			}
+		}
+
+		priv, err := rsa.GenerateKey(rand.Reader, 4096)
+		if err != nil {
+			return err
+		}
+
+		serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+		if err != nil {
+			return err
+		}
+
+		template := x509.Certificate{
+			SerialNumber: serialNumber,
+			Subject: pkix.Name{
+				Organization: []string{"Autentico Client Intermediary CA"},
+				CommonName:   "Autentico Client Intermediary CA",
+			},
+			NotBefore:             time.Now(),
+			NotAfter:              time.Now().Add(time.Duration(ageDays) * 24 * time.Hour),
+			KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
+			ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			BasicConstraintsValid: true,
+			IsCA:                  true,
+			MaxPathLen:            0,
+			MaxPathLenZero:        true,
+		}
+
+		derBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &priv.PublicKey, rootPriv)
+		if err != nil {
+			return err
+		}
+
+		certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+		privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+		if err != nil {
+			return err
+		}
+		privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
+
+		encryptedKey, err := crypto.Encrypt(privPEM, clientInterPassword)
+		if err != nil {
+			return err
+		}
+
+		expireDate := template.NotAfter
+
+		cert := ca.Certificate{
+			ID:            ca.GenerateID(),
+			Type:          "client-int",
+			CreatedAt:     time.Now(),
+			CertPEM:       string(certPEM),
+			KeyCiphertext: encryptedKey,
+			ExpireDate:    &expireDate,
+		}
+
+		if err := ca.InsertCertificate(db.GetWriteDB(), cert); err != nil {
+			return err
+		}
+
+		fmt.Printf("New Client Intermediary CA generated and initialized successfully. ID: %s\n", cert.ID)
 	}
 
-	priv, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		return err
+	if refreshServer {
+		serverInterPassword, err := promptPassword("Enter new password for new Server Intermediary CA: ")
+		if err != nil {
+			return err
+		}
+
+		if serverInter != nil {
+			if err := ca.RevokeCertificate(db.GetWriteDB(), serverInter.ID); err != nil {
+				return err
+			}
+		}
+
+		priv, err := rsa.GenerateKey(rand.Reader, 4096)
+		if err != nil {
+			return err
+		}
+
+		serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+		if err != nil {
+			return err
+		}
+
+		template := x509.Certificate{
+			SerialNumber: serialNumber,
+			Subject: pkix.Name{
+				Organization: []string{"Autentico Server Intermediary CA"},
+				CommonName:   "Autentico Server Intermediary CA",
+			},
+			NotBefore:             time.Now(),
+			NotAfter:              time.Now().Add(time.Duration(ageDays) * 24 * time.Hour),
+			KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
+			ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			BasicConstraintsValid: true,
+			IsCA:                  true,
+			MaxPathLen:            0,
+			MaxPathLenZero:        true,
+		}
+
+		derBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &priv.PublicKey, rootPriv)
+		if err != nil {
+			return err
+		}
+
+		certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+		privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+		if err != nil {
+			return err
+		}
+		privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
+
+		encryptedKey, err := crypto.Encrypt(privPEM, serverInterPassword)
+		if err != nil {
+			return err
+		}
+
+		expireDate := template.NotAfter
+
+		cert := ca.Certificate{
+			ID:            ca.GenerateID(),
+			Type:          "server-int",
+			CreatedAt:     time.Now(),
+			CertPEM:       string(certPEM),
+			KeyCiphertext: encryptedKey,
+			ExpireDate:    &expireDate,
+		}
+
+		if err := ca.InsertCertificate(db.GetWriteDB(), cert); err != nil {
+			return err
+		}
+
+		fmt.Printf("New Server Intermediary CA generated and initialized successfully. ID: %s\n", cert.ID)
 	}
 
-	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
-	if err != nil {
-		return err
-	}
-
-	template := x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{"Autentico Intermediary CA"},
-			CommonName:   "Autentico Intermediary CA",
-		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(time.Duration(ageDays) * 24 * time.Hour),
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-		MaxPathLen:            0,
-		MaxPathLenZero:        true,
-	}
-
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &priv.PublicKey, rootPriv)
-	if err != nil {
-		return err
-	}
-
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-
-	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
-	if err != nil {
-		return err
-	}
-	privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
-
-	encryptedKey, err := crypto.Encrypt(privPEM, interPassword)
-	if err != nil {
-		return err
-	}
-
-	cert := ca.Certificate{
-		ID:            ca.GenerateID(),
-		Type:          "intermediary",
-		CreatedAt:     time.Now(),
-		CertPEM:       string(certPEM),
-		KeyCiphertext: encryptedKey,
-	}
-
-	if err := ca.InsertCertificate(db.GetWriteDB(), cert); err != nil {
-		return err
-	}
-
-	fmt.Printf("New Intermediary CA generated and initialized successfully. ID: %s\n", cert.ID)
 	return nil
 }
 

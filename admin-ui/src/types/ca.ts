@@ -1,6 +1,6 @@
 export interface Certificate {
   id: string;
-  type: "ca" | "intermediary" | "user";
+  type: "ca" | "intermediary" | "client-int" | "server-int" | "user" | "server";
   created_at: string;
   revoked_at?: string;
   user_id?: string;
@@ -8,4 +8,6 @@ export interface Certificate {
   intermediary_id?: string;
   expire_date?: string;
   cert_pem?: string;
+  cn?: string;
+  hosts?: string;
 }

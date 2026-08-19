@@ -30,18 +30,25 @@ func RespondJSON(w http.ResponseWriter, status int, data interface{}) {
 
 func HandleListCertificates(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("user")
+	certType := r.URL.Query().Get("type")
+	if certType == "" {
+		certType = "user"
+	}
 	certs, err := ListCertificates(db.GetReadDB())
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to list certificates")
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to list certificates")
 		return
 	}
 
 	filteredCerts := make([]Certificate, 0)
 	for _, c := range certs {
-		if c.Type == "user" {
-			if userID != "" {
-				if c.UserID != nil && *c.UserID == userID {
+		if c.Type == certType {
+			if certType == "user" {
+				if userID != "" {
+					if c.UserID != nil && *c.UserID == userID {
+						filteredCerts = append(filteredCerts, c)
+					}
+				} else {
 					filteredCerts = append(filteredCerts, c)
 				}
 			} else {
@@ -64,17 +71,26 @@ func HandleGetCAChain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inter, err := GetActiveIntermediaryCA(db.GetReadDB())
+	clientInter, err := GetActiveIntermediaryCA(db.GetReadDB(), "client-int")
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get intermediary CA")
-		return
-	}
-	if inter == nil {
-		utils.WriteErrorResponse(w, http.StatusNotFound, "not_found", "Intermediary CA not found")
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get client intermediary CA")
 		return
 	}
 
-	chain := inter.CertPEM + "\n" + root.CertPEM
+	serverInter, err := GetActiveIntermediaryCA(db.GetReadDB(), "server-int")
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get server intermediary CA")
+		return
+	}
+
+	chain := ""
+	if clientInter != nil {
+		chain += clientInter.CertPEM + "\n"
+	}
+	if serverInter != nil {
+		chain += serverInter.CertPEM + "\n"
+	}
+	chain += root.CertPEM
 
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"ca-chain.crt\"")
@@ -90,7 +106,7 @@ func HandleListAuthorities(w http.ResponseWriter, r *http.Request) {
 
 	filteredCerts := make([]Certificate, 0)
 	for _, c := range certs {
-		if c.Type == "ca" || c.Type == "intermediary" {
+		if c.Type == "ca" || c.Type == "client-int" || c.Type == "server-int" || c.Type == "intermediary" {
 			filteredCerts = append(filteredCerts, c)
 		}
 	}
@@ -136,8 +152,12 @@ func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get active intermediary CA")
 		return
 	}
-	if interCertRec == nil || interCertRec.Type != "intermediary" || interCertRec.RevokedAt != nil {
+	if interCertRec == nil || (interCertRec.Type != "intermediary" && interCertRec.Type != "client-int") || interCertRec.RevokedAt != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid or inactive Intermediary CA")
+		return
+	}
+	if interCertRec.ExpireDate != nil && time.Until(*interCertRec.ExpireDate) < 365*24*time.Hour {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Client Intermediary CA has less than 1 year remaining. Please run 'autentico ca refresh' in the CLI to generate a new intermediary.")
 		return
 	}
 
@@ -187,7 +207,10 @@ func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expireDate := interCert.NotAfter
+	expireDate := time.Now().Add(365 * 24 * time.Hour)
+	if expireDate.After(interCert.NotAfter) {
+		expireDate = interCert.NotAfter
+	}
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
@@ -236,10 +259,160 @@ func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 		UserID:         &u.ID,
 		IntermediaryID: &interCertRec.ID,
 		ExpireDate:     &expireDate,
+		CN:             &u.Username,
 	}
 
 	if err := InsertCertificate(db.GetWriteDB(), cert); err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to save user cert")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"id":      cert.ID,
+	})
+}
+
+type GenerateServerCertRequest struct {
+	IntermediaryID       string   `json:"cert_id"`
+	IntermediaryPassword string   `json:"cert_pw"`
+	Hosts                []string `json:"hosts"`
+}
+
+func HandleGenerateServerCert(w http.ResponseWriter, r *http.Request) {
+	var req GenerateServerCertRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	if req.IntermediaryPassword == "" || req.IntermediaryID == "" || len(req.Hosts) == 0 {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Missing required fields")
+		return
+	}
+
+	interCertRec, err := GetCertificateByID(db.GetReadDB(), req.IntermediaryID)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get active intermediary CA")
+		return
+	}
+	if interCertRec == nil || (interCertRec.Type != "intermediary" && interCertRec.Type != "server-int") || interCertRec.RevokedAt != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid or inactive Server Intermediary CA")
+		return
+	}
+	if interCertRec.ExpireDate != nil && time.Until(*interCertRec.ExpireDate) < 365*24*time.Hour {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Server Intermediary CA has less than 1 year remaining. Please run 'autentico ca refresh' in the CLI to generate a new intermediary.")
+		return
+	}
+
+	interPrivPEM, err := crypto.Decrypt(interCertRec.KeyCiphertext, req.IntermediaryPassword)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusForbidden, "access_denied", "Failed to decrypt intermediary CA key (wrong password?)")
+		return
+	}
+
+	interBlock, _ := pem.Decode(interPrivPEM)
+	if interBlock == nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA private key PEM")
+		return
+	}
+	interPrivAny, err := x509.ParsePKCS8PrivateKey(interBlock.Bytes)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA PKCS8 private key")
+		return
+	}
+	interPriv, ok := interPrivAny.(*rsa.PrivateKey)
+	if !ok {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Intermediary CA key is not RSA")
+		return
+	}
+
+	interCertBlock, _ := pem.Decode([]byte(interCertRec.CertPEM))
+	if interCertBlock == nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA cert PEM")
+		return
+	}
+	interCert, err := x509.ParseCertificate(interCertBlock.Bytes)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA certificate")
+		return
+	}
+
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to generate key")
+		return
+	}
+
+	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to generate serial")
+		return
+	}
+
+	expireDate := time.Now().Add(365 * 24 * time.Hour)
+	if expireDate.After(interCert.NotAfter) {
+		expireDate = interCert.NotAfter
+	}
+
+	hostsJson, _ := json.Marshal(req.Hosts)
+	hostsStr := string(hostsJson)
+	cn := req.Hosts[0]
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Autentico Server"},
+			CommonName:   cn,
+		},
+		DNSNames:              req.Hosts,
+		NotBefore:             time.Now(),
+		NotAfter:              expireDate,
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, interCert, &priv.PublicKey, interPriv)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to sign server cert")
+		return
+	}
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to marshal server key")
+		return
+	}
+
+	aesKey := config.GetBootstrap().DbAesKey
+	if aesKey == "" {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "DB AES key not configured")
+		return
+	}
+
+	encryptedKey, err := crypto.EncryptWithKey(privBytes, aesKey)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to encrypt server key")
+		return
+	}
+
+	cert := Certificate{
+		ID:             GenerateID(),
+		Type:           "server",
+		CreatedAt:      time.Now(),
+		CertPEM:        string(certPEM),
+		KeyCiphertext:  encryptedKey,
+		IntermediaryID: &interCertRec.ID,
+		ExpireDate:     &expireDate,
+		CN:             &cn,
+		Hosts:          &hostsStr,
+	}
+
+	if err := InsertCertificate(db.GetWriteDB(), cert); err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to save server cert")
 		return
 	}
 
@@ -320,12 +493,14 @@ func HandleDownloadUserCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := "user"
+	filename := "user"
 	if certRec.Username != nil {
-		username = *certRec.Username
+		filename = *certRec.Username
+	} else if certRec.CN != nil {
+		filename = *certRec.CN
 	}
 
 	w.Header().Set("Content-Type", "application/x-pkcs12")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.p12\"", username))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.p12\"", filename))
 	w.Write(pfxData)
 }
