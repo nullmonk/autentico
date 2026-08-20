@@ -22,6 +22,9 @@ import (
 )
 
 func promptPassword(prompt string) (string, error) {
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		return "", fmt.Errorf("stdin is not a terminal, cannot prompt for password interactively")
+	}
 	fmt.Print(prompt)
 	bytePassword, err := term.ReadPassword(0) // 0 is stdin
 	fmt.Println()
@@ -43,14 +46,22 @@ func RunCaInit(c *cli.Context) error {
 		ageDays = 3650 // 10 years
 	}
 
-	password, err := promptPassword("Enter master password for Root CA: ")
-	if err != nil {
-		return err
+	password := c.String("ca-key-pass")
+	if password == "" {
+		pw, err := promptPassword("Enter master password for Root CA: ")
+		if err != nil {
+			return err
+		}
+		password = pw
 	}
 
-	interPassword, err := promptPassword("Enter password for Intermediary CA: ")
-	if err != nil {
-		return err
+	interPassword := c.String("client-key-pass")
+	if interPassword == "" {
+		pw, err := promptPassword("Enter password for Intermediary CA: ")
+		if err != nil {
+			return err
+		}
+		interPassword = pw
 	}
 
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
@@ -192,9 +203,13 @@ func RunCaRefresh(c *cli.Context) error {
 		return fmt.Errorf("no active Root CA found. Run 'autentico ca init' first.")
 	}
 
-	rootPassword, err := promptPassword("Enter master password for Root CA: ")
-	if err != nil {
-		return err
+	rootPassword := c.String("ca-key-pass")
+	if rootPassword == "" {
+		pw, err := promptPassword("Enter master password for Root CA: ")
+		if err != nil {
+			return err
+		}
+		rootPassword = pw
 	}
 
 	rootPrivPEM, err := crypto.Decrypt(caCertRec.KeyCiphertext, rootPassword)
@@ -224,9 +239,13 @@ func RunCaRefresh(c *cli.Context) error {
 		return fmt.Errorf("failed to parse root CA certificate: %w", err)
 	}
 
-	interPassword, err := promptPassword("Enter new password for new Intermediary CA: ")
-	if err != nil {
-		return err
+	interPassword := c.String("client-key-pass")
+	if interPassword == "" {
+		pw, err := promptPassword("Enter new password for new Intermediary CA: ")
+		if err != nil {
+			return err
+		}
+		interPassword = pw
 	}
 
 	// Revoke old intermediary
@@ -336,11 +355,8 @@ func RunCaMtlsBundle(c *cli.Context) error {
 		return fmt.Errorf("user not found: %s", username)
 	}
 
-	bundlePassword := c.String("p")
+	bundlePassword := c.String("password")
 	if bundlePassword == "" {
-		if !term.IsTerminal(int(os.Stdin.Fd())) {
-			return fmt.Errorf("bundle password not provided and stdin is not a terminal")
-		}
 		pw, err := promptPassword("Enter password for PKCS#12 bundle: ")
 		if err != nil {
 			return fmt.Errorf("failed to read bundle password: %w", err)
@@ -416,12 +432,13 @@ func RunCaMtlsBundle(c *cli.Context) error {
 			return fmt.Errorf("no active intermediary CA found")
 		}
 
-		if !term.IsTerminal(int(os.Stdin.Fd())) {
-			return fmt.Errorf("cannot prompt for Intermediary CA password, stdin is not a terminal")
-		}
-		interPassword, err := promptPassword("Enter password for Intermediary CA: ")
-		if err != nil {
-			return fmt.Errorf("failed to read intermediary password: %w", err)
+		interPassword := c.String("ca-key-pass")
+		if interPassword == "" {
+			pw, err := promptPassword("Enter password for Intermediary CA: ")
+			if err != nil {
+				return fmt.Errorf("failed to read intermediary password: %w", err)
+			}
+			interPassword = pw
 		}
 
 		interPrivPEM, err := crypto.Decrypt(interCertRec.KeyCiphertext, interPassword)
