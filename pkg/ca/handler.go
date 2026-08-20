@@ -504,3 +504,177 @@ func HandleDownloadUserCert(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.p12\"", filename))
 	w.Write(pfxData)
 }
+
+type GenerateServerCertFromCSRRequest struct {
+	CSR string `json:"csr"`
+}
+
+type GenerateServerCertFromCSRResponse struct {
+	Certificate string `json:"certificate"`
+	ID          string `json:"id"`
+}
+
+func HandleGenerateServerCertFromCSR(w http.ResponseWriter, r *http.Request) {
+	var req GenerateServerCertFromCSRRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
+		return
+	}
+
+	if req.CSR == "" {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Missing CSR")
+		return
+	}
+
+	csrBlock, _ := pem.Decode([]byte(req.CSR))
+	if csrBlock == nil || csrBlock.Type != "CERTIFICATE REQUEST" {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid CSR PEM format")
+		return
+	}
+
+	csr, err := x509.ParseCertificateRequest(csrBlock.Bytes)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Failed to parse CSR")
+		return
+	}
+
+	if err := csr.CheckSignature(); err != nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid CSR signature")
+		return
+	}
+
+	interCertRec, err := GetActiveIntermediaryCA(db.GetReadDB(), "server-int")
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to get active intermediary CA")
+		return
+	}
+	if interCertRec == nil {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Active Server Intermediary CA not found")
+		return
+	}
+	if interCertRec.ExpireDate != nil && time.Until(*interCertRec.ExpireDate) < 365*24*time.Hour {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Server Intermediary CA has less than 1 year remaining. Please run 'autentico ca refresh' in the CLI to generate a new intermediary.")
+		return
+	}
+
+	aesKey := config.GetBootstrap().DbAesKey
+	if aesKey == "" {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "DB AES key not configured")
+		return
+	}
+
+	interPrivPEM, err := crypto.Decrypt(interCertRec.KeyCiphertext, aesKey)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to decrypt intermediary CA key")
+		return
+	}
+
+	interBlock, _ := pem.Decode(interPrivPEM)
+	if interBlock == nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA private key PEM")
+		return
+	}
+	interPrivAny, err := x509.ParsePKCS8PrivateKey(interBlock.Bytes)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA PKCS8 private key")
+		return
+	}
+	interPriv, ok := interPrivAny.(*rsa.PrivateKey)
+	if !ok {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Intermediary CA key is not RSA")
+		return
+	}
+
+	interCertBlock, _ := pem.Decode([]byte(interCertRec.CertPEM))
+	if interCertBlock == nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA cert PEM")
+		return
+	}
+	interCert, err := x509.ParseCertificate(interCertBlock.Bytes)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to parse intermediary CA certificate")
+		return
+	}
+
+	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to generate serial")
+		return
+	}
+
+	expireDate := time.Now().Add(365 * 24 * time.Hour)
+	if expireDate.After(interCert.NotAfter) {
+		expireDate = interCert.NotAfter
+	}
+
+	cn := csr.Subject.CommonName
+	var hosts []string
+	if cn != "" {
+		hosts = append(hosts, cn)
+	}
+	for _, dnsName := range csr.DNSNames {
+		found := false
+		for _, h := range hosts {
+			if h == dnsName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			hosts = append(hosts, dnsName)
+		}
+	}
+	for _, ip := range csr.IPAddresses {
+		hosts = append(hosts, ip.String())
+	}
+
+	if len(hosts) == 0 {
+		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "CSR must contain a Common Name or Subject Alternative Names")
+		return
+	}
+
+	hostsJson, _ := json.Marshal(hosts)
+	hostsStr := string(hostsJson)
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject:      csr.Subject,
+		DNSNames:     csr.DNSNames,
+		IPAddresses:  csr.IPAddresses,
+		NotBefore:    time.Now(),
+		NotAfter:     expireDate,
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, interCert, csr.PublicKey, interPriv)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to sign server cert")
+		return
+	}
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+	cert := Certificate{
+		ID:             GenerateID(),
+		Type:           "server",
+		CreatedAt:      time.Now(),
+		CertPEM:        string(certPEM),
+		KeyCiphertext:  nil,
+		IntermediaryID: &interCertRec.ID,
+		ExpireDate:     &expireDate,
+		CN:             &cn,
+		Hosts:          &hostsStr,
+	}
+
+	if err := InsertCertificate(db.GetWriteDB(), cert); err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to save server cert")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, GenerateServerCertFromCSRResponse{
+		Certificate: string(certPEM),
+		ID:          cert.ID,
+	})
+}
