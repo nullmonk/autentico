@@ -119,6 +119,16 @@ func main() {
 								Usage: "Age of Root CA in days",
 								Value: 3650,
 							},
+							&cli.StringFlag{
+								Name:    "root-password",
+								Usage:   "Master password for the Root CA",
+								EnvVars: []string{"AUTENTICO_CA_ROOT_PASSWORD"},
+							},
+							&cli.StringFlag{
+								Name:    "inter-password",
+								Usage:   "Password for the Intermediary CA",
+								EnvVars: []string{"AUTENTICO_CA_INTER_PASSWORD"},
+							},
 						},
 						Action: appCli.RunCaInit,
 					},
@@ -130,6 +140,16 @@ func main() {
 								Name:  "age",
 								Usage: "Age of Intermediary CA in days",
 								Value: 1095,
+							},
+							&cli.StringFlag{
+								Name:    "root-password",
+								Usage:   "Master password for the Root CA",
+								EnvVars: []string{"AUTENTICO_CA_ROOT_PASSWORD"},
+							},
+							&cli.StringFlag{
+								Name:    "inter-password",
+								Usage:   "New password for the new Intermediary CA",
+								EnvVars: []string{"AUTENTICO_CA_INTER_PASSWORD"},
 							},
 						},
 						Action: appCli.RunCaRefresh,
@@ -148,6 +168,12 @@ func main() {
 								Name:    "p",
 								Aliases: []string{"password"},
 								Usage:   "Password for the PKCS#12 bundle",
+								EnvVars: []string{"AUTENTICO_CA_BUNDLE_PASSWORD"},
+							},
+							&cli.StringFlag{
+								Name:    "inter-password",
+								Usage:   "Password for the Intermediary CA (needed if generating a new user certificate)",
+								EnvVars: []string{"AUTENTICO_CA_INTER_PASSWORD"},
 							},
 						},
 						Action: appCli.RunCaMtlsBundle,
@@ -175,7 +201,7 @@ func main() {
 						Usage:   "Admin email address",
 						EnvVars: []string{"AUTENTICO_ADMIN_EMAIL"},
 					},
-&cli.BoolFlag{
+					&cli.BoolFlag{
 						Name:    "enable-admin-password-grant",
 						Usage:   "Seed the autentico-admin client with the password (ROPC) grant so admin-API tokens can be obtained headlessly (for CI/CD). MFA and account lockout still apply.",
 						EnvVars: []string{"AUTENTICO_ENABLE_ADMIN_PASSWORD_GRANT"},
