@@ -18,6 +18,16 @@ import (
 	"github.com/rs/xid"
 )
 
+// @Summary Create API Token
+// @Description Create a new API token with specific routes access
+// @Tags apitokens
+// @Accept json
+// @Produce json
+// @Param request body CreateApiTokenRequest true "Create API Token Request"
+// @Success 201 {object} CreateApiTokenResponse
+// @Failure 400 {object} model.ApiError
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/api-tokens [post]
 func HandleCreateApiToken(w http.ResponseWriter, r *http.Request) {
 	admin := middleware.AuthInfoFromContext(r.Context()).User
 
@@ -157,10 +167,25 @@ var AvailableAdminRoutes = []AvailableRoute{
 	{Method: "DELETE", Path: "/admin/api/certificates/{id}"},
 }
 
+// @Summary List available routes
+// @Description List all available admin API routes that can be assigned to an API token
+// @Tags apitokens
+// @Produce json
+// @Success 200 {array} AvailableRoute
+// @Router /admin/api/api-tokens/routes [get]
 func HandleListAvailableRoutes(w http.ResponseWriter, r *http.Request) {
 	utils.SuccessResponse(w, AvailableAdminRoutes, http.StatusOK)
 }
 
+// @Summary List API Tokens
+// @Description List all created API tokens
+// @Tags apitokens
+// @Produce json
+// @Param limit query int false "Limit"
+// @Param offset query int false "Offset"
+// @Success 200 {object} ApiTokenListResponse
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/api-tokens [get]
 func HandleListApiTokens(w http.ResponseWriter, r *http.Request) {
 	params := api.ParseListParams(r)
 
@@ -182,6 +207,14 @@ func HandleListApiTokens(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
+// @Summary Revoke API Token
+// @Description Revoke an API token by ID
+// @Tags apitokens
+// @Produce json
+// @Param id path string true "API Token ID"
+// @Success 204
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/api-tokens/{id} [delete]
 func HandleRevokeApiToken(w http.ResponseWriter, r *http.Request) {
 	admin := middleware.AuthInfoFromContext(r.Context()).User
 	id := r.PathValue("id")

@@ -13,6 +13,11 @@ definitions:
       provider_name:
         type: string
     type: object
+  account.DeviceVerifyRequest:
+    properties:
+      user_code:
+        type: string
+    type: object
   account.DisableMfaRequest:
     properties:
       code:
@@ -109,6 +114,59 @@ definitions:
       total_users:
         type: integer
     type: object
+  apitoken.ApiToken:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  apitoken.ApiTokenListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apitoken.ApiToken'
+        type: array
+      total:
+        type: integer
+    type: object
+  apitoken.AvailableRoute:
+    properties:
+      method:
+        type: string
+      path:
+        type: string
+    type: object
+  apitoken.CreateApiTokenRequest:
+    properties:
+      expires_at:
+        type: string
+      name:
+        type: string
+      routes:
+        items:
+          type: string
+        type: array
+    type: object
+  apitoken.CreateApiTokenResponse:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      token:
+        type: string
+    type: object
   appsettings.settingsExport:
     properties:
       exported_at:
@@ -160,6 +218,57 @@ definitions:
         type: string
       target_type:
         type: string
+    type: object
+  ca.Certificate:
+    properties:
+      cert_pem:
+        type: string
+      cn:
+        type: string
+      created_at:
+        type: string
+      expire_date:
+        type: string
+      hosts:
+        type: string
+      id:
+        type: string
+      intermediary_id:
+        type: string
+      revoked_at:
+        type: string
+      type:
+        description: '"ca", "intermediary", "user"'
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  ca.GenerateCertRequest:
+    properties:
+      cert_id:
+        type: string
+      cert_pw:
+        type: string
+      username:
+        type: string
+    type: object
+  ca.GenerateServerCertFromCSRRequest:
+    properties:
+      csr:
+        type: string
+    type: object
+  ca.GenerateServerCertRequest:
+    properties:
+      cert_id:
+        type: string
+      cert_pw:
+        type: string
+      hosts:
+        items:
+          type: string
+        type: array
     type: object
   client.ClientCreateRequest:
     properties:
@@ -1167,6 +1276,111 @@ paths:
       summary: Request account deletion
       tags:
       - account-deletion
+  /account/api/device/authorize:
+    post:
+      consumes:
+      - application/json
+      description: Authorize device authorization request
+      parameters:
+      - description: Device Authorize Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/account.DeviceVerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Authorize Device
+      tags:
+      - devicecode
+  /account/api/device/deny:
+    post:
+      consumes:
+      - application/json
+      description: Deny device authorization request
+      parameters:
+      - description: Device Deny Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/account.DeviceVerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Deny Device
+      tags:
+      - devicecode
+  /account/api/device/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify device authorization request using user code
+      parameters:
+      - description: Device Verify Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/account.DeviceVerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Verify Device Authorization
+      tags:
+      - devicecode
   /account/api/mfa:
     get:
       description: Returns the MFA enrollment status for the authenticated user.
@@ -1717,6 +1931,98 @@ paths:
       summary: Revoke a trusted device
       tags:
       - account-security
+  /admin/api/api-tokens:
+    get:
+      description: List all created API tokens
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apitoken.ApiTokenListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: List API Tokens
+      tags:
+      - apitokens
+    post:
+      consumes:
+      - application/json
+      description: Create a new API token with specific routes access
+      parameters:
+      - description: Create API Token Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/apitoken.CreateApiTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apitoken.CreateApiTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Create API Token
+      tags:
+      - apitokens
+  /admin/api/api-tokens/{id}:
+    delete:
+      description: Revoke an API token by ID
+      parameters:
+      - description: API Token ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Revoke API Token
+      tags:
+      - apitokens
+  /admin/api/api-tokens/routes:
+    get:
+      description: List all available admin API routes that can be assigned to an
+        API token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apitoken.AvailableRoute'
+            type: array
+      summary: List available routes
+      tags:
+      - apitokens
   /admin/api/audit-logs:
     get:
       description: Returns a paginated list of audit events with optional filters,
@@ -1770,6 +2076,197 @@ paths:
       summary: List audit log events
       tags:
       - admin-settings
+  /admin/api/ca/server:
+    post:
+      consumes:
+      - application/json
+      description: Generate a new certificate for a server using a CSR
+      parameters:
+      - description: Generate Server Certificate from CSR Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ca.GenerateServerCertFromCSRRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ca.Certificate'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Generate Server Certificate from CSR
+      tags:
+      - ca
+  /admin/api/certificates:
+    get:
+      description: List all certificates
+      parameters:
+      - description: User ID
+        in: query
+        name: user
+        type: string
+      - description: Certificate Type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: List Certificates
+      tags:
+      - ca
+    post:
+      consumes:
+      - application/json
+      description: Generate a new certificate for a user
+      parameters:
+      - description: Generate Certificate Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ca.GenerateCertRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ca.Certificate'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Generate User Certificate
+      tags:
+      - ca
+  /admin/api/certificates/{id}:
+    delete:
+      description: Revoke a certificate by ID
+      parameters:
+      - description: Certificate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Revoke Certificate
+      tags:
+      - ca
+  /admin/api/certificates/{id}/bundle:
+    get:
+      description: Download a PKCS12 bundle for a user certificate
+      parameters:
+      - description: Certificate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Password for the bundle
+        in: query
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/x-pkcs12
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Download User Certificate Bundle
+      tags:
+      - ca
+  /admin/api/certificates/authorities:
+    get:
+      description: List all certificate authorities
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: List Certificate Authorities
+      tags:
+      - ca
+  /admin/api/certificates/server:
+    post:
+      consumes:
+      - application/json
+      description: Generate a new certificate for a server
+      parameters:
+      - description: Generate Server Certificate Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ca.GenerateServerCertRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ca.Certificate'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Generate Server Certificate
+      tags:
+      - ca
   /admin/api/clients:
     get:
       description: Lists clients with server-side sorting, filtering, search, and

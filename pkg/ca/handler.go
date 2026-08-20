@@ -28,6 +28,15 @@ func RespondJSON(w http.ResponseWriter, status int, data interface{}) {
 	}
 }
 
+// @Summary List Certificates
+// @Description List all certificates
+// @Tags ca
+// @Produce json
+// @Param user query string false "User ID"
+// @Param type query string false "Certificate Type"
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/certificates [get]
 func HandleListCertificates(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("user")
 	certType := r.URL.Query().Get("type")
@@ -97,6 +106,13 @@ func HandleGetCAChain(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(chain))
 }
 
+// @Summary List Certificate Authorities
+// @Description List all certificate authorities
+// @Tags ca
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/certificates/authorities [get]
 func HandleListAuthorities(w http.ResponseWriter, r *http.Request) {
 	certs, err := ListCertificates(db.GetReadDB())
 	if err != nil {
@@ -114,6 +130,14 @@ func HandleListAuthorities(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, map[string]interface{}{"items": filteredCerts})
 }
 
+// @Summary Revoke Certificate
+// @Description Revoke a certificate by ID
+// @Tags ca
+// @Produce json
+// @Param id path string true "Certificate ID"
+// @Success 204
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/certificates/{id} [delete]
 func HandleRevokeCertificate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := RevokeCertificate(db.GetWriteDB(), id); err != nil {
@@ -129,6 +153,16 @@ type GenerateCertRequest struct {
 	Username             string `json:"username"`
 }
 
+// @Summary Generate User Certificate
+// @Description Generate a new certificate for a user
+// @Tags ca
+// @Accept json
+// @Produce json
+// @Param request body GenerateCertRequest true "Generate Certificate Request"
+// @Success 201 {object} Certificate
+// @Failure 400 {object} model.ApiError
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/certificates [post]
 func HandleGenerateUserCert(w http.ResponseWriter, r *http.Request) {
 	var req GenerateCertRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -279,6 +313,16 @@ type GenerateServerCertRequest struct {
 	Hosts                []string `json:"hosts"`
 }
 
+// @Summary Generate Server Certificate
+// @Description Generate a new certificate for a server
+// @Tags ca
+// @Accept json
+// @Produce json
+// @Param request body GenerateServerCertRequest true "Generate Server Certificate Request"
+// @Success 201 {object} Certificate
+// @Failure 400 {object} model.ApiError
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/certificates/server [post]
 func HandleGenerateServerCert(w http.ResponseWriter, r *http.Request) {
 	var req GenerateServerCertRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -422,6 +466,17 @@ func HandleGenerateServerCert(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary Download User Certificate Bundle
+// @Description Download a PKCS12 bundle for a user certificate
+// @Tags ca
+// @Produce application/x-pkcs12
+// @Param id path string true "Certificate ID"
+// @Param password query string true "Password for the bundle"
+// @Success 200 {file} file
+// @Failure 400 {object} model.ApiError
+// @Failure 404 {object} model.ApiError
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/certificates/{id}/bundle [get]
 func HandleDownloadUserCert(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
@@ -514,6 +569,16 @@ type GenerateServerCertFromCSRResponse struct {
 	ID          string `json:"id"`
 }
 
+// @Summary Generate Server Certificate from CSR
+// @Description Generate a new certificate for a server using a CSR
+// @Tags ca
+// @Accept json
+// @Produce json
+// @Param request body GenerateServerCertFromCSRRequest true "Generate Server Certificate from CSR Request"
+// @Success 201 {object} Certificate
+// @Failure 400 {object} model.ApiError
+// @Failure 500 {object} model.ApiError
+// @Router /admin/api/ca/server [post]
 func HandleGenerateServerCertFromCSR(w http.ResponseWriter, r *http.Request) {
 	var req GenerateServerCertFromCSRRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
