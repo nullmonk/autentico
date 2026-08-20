@@ -65,12 +65,19 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 			// Verify requested path against scopes
 			matched := false
 			for _, route := range claims.Routes {
+				if route == "*" {
+					matched = true
+					break
+				}
 				parts := strings.SplitN(route, ":", 2)
 				if len(parts) == 2 {
 					routePath := parts[0]
 					routeMethod := parts[1]
 
-					if r.Method == routeMethod && strings.HasPrefix(r.URL.Path, routePath) {
+					methodMatches := routeMethod == "*" || r.Method == routeMethod
+					pathMatches := routePath == "*" || strings.HasPrefix(r.URL.Path, routePath)
+
+					if methodMatches && pathMatches {
 						matched = true
 						break
 					}
