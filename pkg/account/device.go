@@ -22,6 +22,17 @@ type DeviceVerifyResponse struct {
 }
 
 // HandleDeviceVerify looks up a device code by user_code and returns the client info.
+// @Summary Verify Device Authorization
+// @Description Verify device authorization request using user code
+// @Tags devicecode
+// @Accept json
+// @Produce json
+// @Param request body DeviceVerifyRequest true "Device Verify Request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} model.ApiError
+// @Failure 401 {object} model.ApiError
+// @Failure 404 {object} model.ApiError
+// @Router /account/api/device/verify [post]
 func HandleDeviceVerify(w http.ResponseWriter, r *http.Request) {
 	usr := middleware.UserFromContext(r.Context())
 	if usr == nil {
@@ -70,6 +81,17 @@ func HandleDeviceVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleDeviceAuthorize authorizes a pending device code for the current user.
+// @Summary Authorize Device
+// @Description Authorize device authorization request
+// @Tags devicecode
+// @Accept json
+// @Produce json
+// @Param request body DeviceVerifyRequest true "Device Authorize Request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} model.ApiError
+// @Failure 401 {object} model.ApiError
+// @Failure 404 {object} model.ApiError
+// @Router /account/api/device/authorize [post]
 func HandleDeviceAuthorize(w http.ResponseWriter, r *http.Request) {
 	usr := middleware.UserFromContext(r.Context())
 	if usr == nil {
@@ -114,6 +136,17 @@ func HandleDeviceAuthorize(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleDeviceDeny denies a pending device code.
+// @Summary Deny Device
+// @Description Deny device authorization request
+// @Tags devicecode
+// @Accept json
+// @Produce json
+// @Param request body DeviceVerifyRequest true "Device Deny Request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} model.ApiError
+// @Failure 401 {object} model.ApiError
+// @Failure 404 {object} model.ApiError
+// @Router /account/api/device/deny [post]
 func HandleDeviceDeny(w http.ResponseWriter, r *http.Request) {
 	usr := middleware.UserFromContext(r.Context())
 	if usr == nil {
