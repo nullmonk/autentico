@@ -62,4 +62,59 @@ describe('Admin API Tokens', () => {
     const getUsersResp = await getResponse(`${BASE_URL}/admin/api/users`, createdTokenValue);
     expect(getUsersResp.status).toBe(401);
   });
+
+  it('should allow wildcard route creation and access', async () => {
+    const adminToken = await getAdminToken();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    const reqBody = {
+      name: 'Wildcard Token',
+      expires_at: expiresAt.toISOString(),
+      routes: ['*:*'] // full access
+    };
+
+    const createResp = await postJSON(API_TOKENS_ENDPOINT, reqBody, adminToken);
+    expect(createResp.status).toBe(201);
+    const createBody = await createResp.json();
+    const wildcardToken = createBody.data.token;
+
+    // Should have access to multiple different routes/methods
+    const getUsersResp = await getResponse(`${BASE_URL}/admin/api/users`, wildcardToken);
+    expect(getUsersResp.status).toBe(200);
+
+    const getClientsResp = await getResponse(`${BASE_URL}/admin/api/clients`, wildcardToken);
+    expect(getClientsResp.status).toBe(200);
+
+    // Revoke cleanup
+    await deleteRequest(`${API_TOKENS_ENDPOINT}/${createBody.data.id}`, adminToken);
+  });
+
+  it('should allow partial wildcard route access', async () => {
+    const adminToken = await getAdminToken();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    const reqBody = {
+      name: 'Partial Wildcard Token',
+      expires_at: expiresAt.toISOString(),
+      routes: ['/admin/api/clients:*'] // any method on clients
+    };
+
+    const createResp = await postJSON(API_TOKENS_ENDPOINT, reqBody, adminToken);
+    expect(createResp.status).toBe(201);
+    const createBody = await createResp.json();
+    const partialToken = createBody.data.token;
+
+    // Should have access to clients route
+    const getClientsResp = await getResponse(`${BASE_URL}/admin/api/clients`, partialToken);
+    expect(getClientsResp.status).toBe(200);
+
+    // Should NOT have access to users route
+    const getUsersResp = await getResponse(`${BASE_URL}/admin/api/users`, partialToken);
+    expect(getUsersResp.status).toBe(403);
+
+    // Revoke cleanup
+    await deleteRequest(`${API_TOKENS_ENDPOINT}/${createBody.data.id}`, adminToken);
+  });
 });
