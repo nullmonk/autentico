@@ -92,7 +92,7 @@ func HandleCreateApiToken(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt: req.ExpiresAt,
 	}
 
-	utils.SuccessResponse(w, res, http.StatusOK)
+	utils.SuccessResponse(w, res, http.StatusCreated)
 }
 
 // AvailableAdminRoutes is a hardcoded list of all known API routes

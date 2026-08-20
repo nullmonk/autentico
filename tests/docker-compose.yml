@@ -1,0 +1,20 @@
+services:
+  autentico-test:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "9999:9999"
+    volumes:
+      - autentico-test-data:/app/data
+    environment:
+      AUTENTICO_APP_URL: http://localhost:9999
+      AUTENTICO_DB_FILE_PATH: /app/data/autentico.db
+      AUTENTICO_ACCESS_TOKEN_SECRET: change-me-in-test
+      AUTENTICO_REFRESH_TOKEN_SECRET: change-me-in-test
+      AUTENTICO_CSRF_SECRET_KEY: change-me-in-test
+      AUTENTICO_DB_AES_KEY: change-me-in-test
+    command: ["start"]
+
+volumes:
+  autentico-test-data:
