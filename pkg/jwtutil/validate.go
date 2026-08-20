@@ -22,6 +22,7 @@ type AccessTokenClaims struct {
 	Issuer            string   `json:"iss"`
 	Scope             string   `json:"scope"`
 	Role              string   `json:"role,omitempty"`
+	Roles             []string `json:"roles,omitempty"`
 	Routes            []string `json:"routes,omitempty"`
 }
 

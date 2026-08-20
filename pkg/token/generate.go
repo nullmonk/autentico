@@ -85,13 +85,19 @@ func GenerateTokens(user user.User, clientID string, scope string, cfg *config.C
 		accessClaims["email_verified"] = user.IsEmailVerified
 	}
 
+	roles := []string{user.Role}
+
 	// Embed groups claim when "groups" scope was requested
 	if containsScope(scope, "groups") {
 		groupNames, err := group.GroupNamesByUserID(user.ID)
 		if err == nil && len(groupNames) > 0 {
 			accessClaims["groups"] = groupNames
+			roles = append(roles, groupNames...)
 		}
 	}
+
+	accessClaims["roles"] = roles
+
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessClaims)
 	accessToken.Header["kid"] = bs.AuthJwkCertKeyID
 	signedAccessToken, err := accessToken.SignedString(key.GetPrivateKey())
@@ -178,13 +184,18 @@ func GenerateIDToken(user user.User, sessionID string, nonce string, scope strin
 		}
 	}
 
+	roles := []string{user.Role}
+
 	// Embed groups claim when "groups" scope was requested
 	if containsScope(scope, "groups") {
 		groupNames, err := group.GroupNamesByUserID(user.ID)
 		if err == nil && len(groupNames) > 0 {
 			claims["groups"] = groupNames
+			roles = append(roles, groupNames...)
 		}
 	}
+
+	claims["roles"] = roles
 
 	// OIDC Core §5.4: the AS MAY return email claims in the ID token when the
 	// "email" scope was requested, even if they are also available via UserInfo.

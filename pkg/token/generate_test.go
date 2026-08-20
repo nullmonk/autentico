@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/eugenioenko/autentico/pkg/config"
 	"github.com/eugenioenko/autentico/pkg/key"
 	"github.com/eugenioenko/autentico/pkg/user"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +61,7 @@ func TestGenerateTokens_AccessTokenClaimSet(t *testing.T) {
 
 	expectedKeys := []string{
 		"exp", "iat", "auth_time", "jti", "iss", "aud", "sub",
-		"typ", "azp", "sid", "acr", "scope", "role",
+		"typ", "azp", "sid", "acr", "scope", "role", "roles",
 		"name", "preferred_username",
 		"email", "email_verified",
 	}
@@ -107,7 +107,7 @@ func TestGenerateTokens_AccessTokenClaimSet_MinimalScope(t *testing.T) {
 
 	expectedKeys := []string{
 		"exp", "iat", "auth_time", "jti", "iss", "aud", "sub",
-		"typ", "azp", "sid", "acr", "scope", "role",
+		"typ", "azp", "sid", "acr", "scope", "role", "roles",
 	}
 	for _, k := range expectedKeys {
 		assert.Contains(t, claims, k, "access token must contain claim %q", k)
@@ -140,7 +140,7 @@ func TestGenerateIDToken_ClaimSet(t *testing.T) {
 		"iss", "sub", "aud", "exp", "iat", "auth_time", "sid", "acr",
 		"nonce", "at_hash", "azp",
 		"name", "preferred_username", "given_name", "family_name",
-		"email", "email_verified",
+		"email", "email_verified", "roles",
 	}
 	for _, k := range expectedKeys {
 		assert.Contains(t, claims, k, "ID token must contain claim %q", k)
@@ -162,7 +162,7 @@ func TestGenerateIDToken_ClaimSet_MinimalScope(t *testing.T) {
 	claims := parseIDTokenClaims(t, idToken)
 
 	expectedKeys := []string{
-		"iss", "sub", "aud", "exp", "iat", "auth_time", "sid", "acr", "azp",
+		"iss", "sub", "aud", "exp", "iat", "auth_time", "sid", "acr", "azp", "roles",
 	}
 	for _, k := range expectedKeys {
 		assert.Contains(t, claims, k, "ID token must contain claim %q", k)
