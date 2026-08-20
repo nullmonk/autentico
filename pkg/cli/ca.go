@@ -17,8 +17,8 @@ import (
 	"github.com/eugenioenko/autentico/pkg/user"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
-	"os"
 	"software.sslmate.com/src/go-pkcs12"
+	"os"
 )
 
 func promptPassword(prompt string) (string, error) {
@@ -46,7 +46,7 @@ func RunCaInit(c *cli.Context) error {
 		ageDays = 3650 // 10 years
 	}
 
-	password := c.String("root-password")
+	password := c.String("ca-key-pass")
 	if password == "" {
 		pw, err := promptPassword("Enter master password for Root CA: ")
 		if err != nil {
@@ -55,7 +55,7 @@ func RunCaInit(c *cli.Context) error {
 		password = pw
 	}
 
-	interPassword := c.String("inter-password")
+	interPassword := c.String("client-key-pass")
 	if interPassword == "" {
 		pw, err := promptPassword("Enter password for Intermediary CA: ")
 		if err != nil {
@@ -203,7 +203,7 @@ func RunCaRefresh(c *cli.Context) error {
 		return fmt.Errorf("no active Root CA found. Run 'autentico ca init' first.")
 	}
 
-	rootPassword := c.String("root-password")
+	rootPassword := c.String("ca-key-pass")
 	if rootPassword == "" {
 		pw, err := promptPassword("Enter master password for Root CA: ")
 		if err != nil {
@@ -239,7 +239,7 @@ func RunCaRefresh(c *cli.Context) error {
 		return fmt.Errorf("failed to parse root CA certificate: %w", err)
 	}
 
-	interPassword := c.String("inter-password")
+	interPassword := c.String("client-key-pass")
 	if interPassword == "" {
 		pw, err := promptPassword("Enter new password for new Intermediary CA: ")
 		if err != nil {
@@ -355,7 +355,7 @@ func RunCaMtlsBundle(c *cli.Context) error {
 		return fmt.Errorf("user not found: %s", username)
 	}
 
-	bundlePassword := c.String("p")
+	bundlePassword := c.String("password")
 	if bundlePassword == "" {
 		pw, err := promptPassword("Enter password for PKCS#12 bundle: ")
 		if err != nil {
@@ -432,7 +432,7 @@ func RunCaMtlsBundle(c *cli.Context) error {
 			return fmt.Errorf("no active intermediary CA found")
 		}
 
-		interPassword := c.String("inter-password")
+		interPassword := c.String("ca-key-pass")
 		if interPassword == "" {
 			pw, err := promptPassword("Enter password for Intermediary CA: ")
 			if err != nil {
