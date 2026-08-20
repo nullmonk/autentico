@@ -21,9 +21,10 @@ func Create(token *ApiToken) error {
 
 func List(limit, offset int) ([]ApiToken, int, error) {
 	query := `
-		SELECT id, name, created_by, created_at, expires_at
-		FROM api_tokens
-		ORDER BY created_at DESC
+		SELECT a.id, a.name, COALESCE(u.username, a.created_by), a.created_at, a.expires_at
+		FROM api_tokens a
+		LEFT JOIN users u ON a.created_by = u.id
+		ORDER BY a.created_at DESC
 		LIMIT ? OFFSET ?
 	`
 	rows, err := db.GetDB().Query(query, limit, offset)
@@ -65,9 +66,10 @@ func Revoke(id string) error {
 func GetByID(id string) (*ApiToken, error) {
 	var t ApiToken
 	err := db.GetDB().QueryRow(`
-		SELECT id, name, token_ciphertext, created_by, created_at, expires_at
-		FROM api_tokens
-		WHERE id = ?
+		SELECT a.id, a.name, a.token_ciphertext, COALESCE(u.username, a.created_by), a.created_at, a.expires_at
+		FROM api_tokens a
+		LEFT JOIN users u ON a.created_by = u.id
+		WHERE a.id = ?
 	`, id).Scan(&t.ID, &t.Name, &t.TokenCiphertext, &t.CreatedBy, &t.CreatedAt, &t.ExpiresAt)
 
 	if err != nil {
