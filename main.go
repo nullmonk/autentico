@@ -139,6 +139,19 @@ func main() {
 						Usage:  "Delete all certificates",
 						Action: appCli.RunCaDelete,
 					},
+					{
+						Name:      "mtls-bundle",
+						Usage:     "Generate or retrieve an mTLS bundle for a user",
+						ArgsUsage: "<user> <file>",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "p",
+								Aliases: []string{"password"},
+								Usage:   "Password for the PKCS#12 bundle",
+							},
+						},
+						Action: appCli.RunCaMtlsBundle,
+					},
 				},
 			},
 			{
