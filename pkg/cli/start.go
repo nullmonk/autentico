@@ -235,6 +235,7 @@ func RunStart(c *cli.Context) error {
 
 	mux.Handle("GET /admin/api/certificates", adminAPI(ca.HandleListCertificates))
 	mux.Handle("POST /admin/api/certificates", adminAPI(ca.HandleGenerateUserCert))
+	mux.Handle("POST /admin/api/certificates/server", adminAPI(ca.HandleGenerateServerCert))
 	mux.Handle("GET /admin/api/certificates/authorities", adminAPI(ca.HandleListAuthorities))
 	mux.Handle("GET /admin/api/certificates/{id}/bundle", adminAPI(ca.HandleDownloadUserCert))
 	mux.Handle("DELETE /admin/api/certificates/{id}", adminAPI(ca.HandleRevokeCertificate))

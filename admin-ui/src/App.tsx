@@ -47,6 +47,7 @@ const TokensPage = lazy(() => import("./pages/TokensPage"));
 const AuditLogPage = lazy(() => import("./pages/AuditLogPage"));
 const CaPage = lazy(() => import("./pages/ca/CaPage"));
 const ClientCertificatesPage = lazy(() => import("./pages/ca/ClientCertificatesPage"));
+const ServerCertificatesPage = lazy(() => import("./pages/ca/ServerCertificatesPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },
@@ -126,6 +127,7 @@ function ThemedApp() {
                   <Route path="audit-log" element={<AuditLogPage />} />
                   <Route path="ca" element={<CaPage />} />
                   <Route path="ca-clients" element={<ClientCertificatesPage />} />
+                  <Route path="ca-servers" element={<ServerCertificatesPage />} />
                 </Route>
               </Route>
             </Routes>

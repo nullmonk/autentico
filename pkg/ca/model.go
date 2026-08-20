@@ -17,6 +17,8 @@ type Certificate struct {
 	ExpireDate    *time.Time `json:"expire_date,omitempty"`
 	CertPEM       string     `json:"cert_pem,omitempty"`
 	KeyCiphertext []byte     `json:"-"`
+	CN            *string    `json:"cn,omitempty"`
+	Hosts         *string    `json:"hosts,omitempty"`
 }
 
 func GenerateID() string {

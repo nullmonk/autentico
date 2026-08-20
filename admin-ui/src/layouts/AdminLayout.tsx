@@ -43,6 +43,7 @@ const menuItems: any[] = [
     children: [
       { key: "/ca", label: "CA" },
       { key: "/ca-clients", label: "Client Certificates" },
+      { key: "/ca-servers", label: "Server Certificates" },
     ],
   },
   { key: "/settings", icon: <SettingOutlined />, label: "Settings" },
@@ -71,16 +72,28 @@ export default function AdminLayout() {
 
   const findSelectedKey = (items: any[], path: string): string => {
     if (path === "/") return "/";
-    for (const item of items) {
-      if (item.children) {
-        const childMatch = findSelectedKey(item.children, path);
-        if (childMatch !== "/") return childMatch;
+
+    let bestMatch = "/";
+    let matchLength = 0;
+
+    const traverse = (menuItems: any[]) => {
+      for (const item of menuItems) {
+        if (item.children) {
+          traverse(item.children);
+        }
+        if (item.key && item.key !== "/") {
+          if (path === item.key || path.startsWith(item.key + "/")) {
+            if (item.key.length > matchLength) {
+              bestMatch = item.key;
+              matchLength = item.key.length;
+            }
+          }
+        }
       }
-      if (item.key && item.key !== "/" && path.startsWith(item.key)) {
-        return item.key;
-      }
-    }
-    return "/";
+    };
+
+    traverse(items);
+    return bestMatch;
   };
   const selectedKey = findSelectedKey(menuItems, location.pathname);
 
