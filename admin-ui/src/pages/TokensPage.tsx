@@ -22,6 +22,7 @@ import type { ListParams } from "../api/users";
 import type { AdminTokenResponse } from "../types/token";
 import GrantChips from "../components/GrantChips";
 import { useTableScrollY } from "../hooks/useTableScrollY";
+import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
 
@@ -102,6 +103,9 @@ export default function TokensPage() {
   const [detailToken, setDetailToken] = useState<AdminTokenResponse | null>(
     null
   );
+  const defaultPageSize = useApplyDefaultPageSize((size) =>
+    setListParams((prev) => ({ ...prev, limit: size, offset: 0 }))
+  );
 
   const handleRevoke = async (id: string) => {
     try {
@@ -144,13 +148,13 @@ export default function TokensPage() {
         ...prev,
         offset:
           ((pagination.current ?? 1) - 1) *
-          (pagination.pageSize ?? DEFAULT_PAGE_SIZE),
-        limit: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+          (pagination.pageSize ?? defaultPageSize),
+        limit: pagination.pageSize ?? defaultPageSize,
         sort: s.field ? String(s.field) : prev.sort,
         order: s.order === "descend" ? "desc" : "asc",
       }));
     },
-    []
+    [defaultPageSize]
   );
 
   const handleSearch = useCallback((value: string) => {
@@ -313,9 +317,9 @@ export default function TokensPage() {
             current:
               Math.floor(
                 (listParams.offset ?? 0) /
-                  (listParams.limit ?? DEFAULT_PAGE_SIZE)
+                  (listParams.limit ?? defaultPageSize)
               ) + 1,
-            pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,
+            pageSize: listParams.limit ?? defaultPageSize,
             total: data?.total ?? 0,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS,

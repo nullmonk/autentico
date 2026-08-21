@@ -117,6 +117,7 @@ const tip = makeTip({
   passkey_login_mode: "How passkeys are presented on the login page. Username First: user enters username first. Discoverable: button triggers usernameless login. Conditional: browser auto-surfaces passkeys via autofill. Passkey Only: no username field, only passkey login.",
   magic_link_enabled: "Allow users to sign in via a magic link sent to their email, without entering a password. Requires SMTP.",
   magic_link_expiration: "How long a magic link remains valid (e.g. 15m, 30m).",
+  default_page_size: "Default number of rows shown per page in admin UI tables (users, clients, groups, etc.).",
 }, "https://autentico.top/configuration/runtime-settings");
 
 interface FooterLink {
@@ -1072,12 +1073,12 @@ export default function SettingsPage() {
                       placeholder="Select tabs to hide"
                       options={[
                         { label: "Login & Registration", value: "1" },
-                        { label: "Email (SMTP)", value: "2" },
-                        { label: "User Profiles", value: "3" },
-                        { label: "Themes & Styling", value: "4" },
-                        { label: "Tokens & Sessions", value: "5" },
-                        { label: "Maintenance", value: "6" },
-                        { label: "Rate Limiting", value: "7" },
+                        { label: "MFA & Trusted Devices", value: "2" },
+                        { label: "Sessions & Tokens", value: "3" },
+                        { label: "Security", value: "4" },
+                        { label: "SMTP", value: "5" },
+                        { label: "Profile Fields", value: "6" },
+                        { label: "Branding", value: "7" },
                         { label: "Backup", value: "8" },
                         { label: "Admin UI", value: "9" },
                       ]}
@@ -1093,6 +1094,13 @@ export default function SettingsPage() {
                       placeholder='{&#10;  "/users": ["email", "created_at"]&#10;}'
                       style={{ fontFamily: "monospace" }}
                     />
+                  </Form.Item>
+                  <Form.Item
+                    label="Default Page Size"
+                    name="default_page_size"
+                    tooltip={{ title: tip("default_page_size"), icon: <ExclamationCircleOutlined /> }}
+                  >
+                    <InputNumber min={1} max={1000} />
                   </Form.Item>
                 </TabContent>
               ),

@@ -21,6 +21,7 @@ import {
 import type { DeletionRequestResponse } from "../../api/deletion";
 import type { ListParams } from "../../api/users";
 import { useTableScrollY } from "../../hooks/useTableScrollY";
+import { useApplyDefaultPageSize } from "../../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../../constants/table";
 import CopyText from "../CopyText";
 
@@ -49,6 +50,9 @@ export default function DeletionRequestsTab() {
 
   const [detailRequest, setDetailRequest] =
     useState<DeletionRequestResponse | null>(null);
+  const defaultPageSize = useApplyDefaultPageSize((size) =>
+    setListParams((prev) => ({ ...prev, limit: size, offset: 0 }))
+  );
 
   const handleApprove = async (id: string) => {
     try {
@@ -89,13 +93,13 @@ export default function DeletionRequestsTab() {
         ...prev,
         offset:
           ((pagination.current ?? 1) - 1) *
-          (pagination.pageSize ?? DEFAULT_PAGE_SIZE),
-        limit: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+          (pagination.pageSize ?? defaultPageSize),
+        limit: pagination.pageSize ?? defaultPageSize,
         sort: s.field ? String(s.field) : "requested_at",
         order: s.order === "ascend" ? "asc" : "desc",
       }));
     },
-    []
+    [defaultPageSize]
   );
 
   const columns: ColumnsType<DeletionRequestResponse> = [
@@ -214,9 +218,9 @@ export default function DeletionRequestsTab() {
             current:
               Math.floor(
                 (listParams.offset ?? 0) /
-                  (listParams.limit ?? DEFAULT_PAGE_SIZE)
+                  (listParams.limit ?? defaultPageSize)
               ) + 1,
-            pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,
+            pageSize: listParams.limit ?? defaultPageSize,
             total: data?.total ?? 0,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS,
