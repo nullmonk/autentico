@@ -11,7 +11,10 @@ import (
 	"github.com/eugenioenko/autentico/pkg/api"
 	"github.com/eugenioenko/autentico/pkg/config"
 	"github.com/eugenioenko/autentico/pkg/db"
+	"github.com/eugenioenko/autentico/pkg/jwtutil"
+	"github.com/eugenioenko/autentico/pkg/key"
 	"github.com/eugenioenko/autentico/pkg/model"
+	"github.com/golang-jwt/jwt/v5"
 	testutils "github.com/eugenioenko/autentico/tests/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -322,6 +325,30 @@ func TestActorFromRequest_InvalidToken(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer invalid-jwt-token")
 	actor := ActorFromRequest(req)
 	assert.Nil(t, actor)
+}
+
+func TestActorFromRequest_ApiToken(t *testing.T) {
+	testutils.WithTestDB(t)
+
+	claims := &jwtutil.AccessTokenClaims{
+		ID:                "atk_123",
+		PreferredUsername: "test-api-token",
+		Role:              "api",
+		IssuedAt:          time.Now().Unix(),
+		ExpiresAt:         time.Now().Add(time.Hour).Unix(),
+		Audience:          []string{config.AdminClientID},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	tokenString, err := token.SignedString(key.GetPrivateKey())
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+tokenString)
+
+	actor := ActorFromRequest(req)
+	require.NotNil(t, actor)
+	assert.Equal(t, "atk_123", actor.GetID())
+	assert.Equal(t, "test-api-token", actor.GetUsername())
 }
 
 // ---------- ToResponse ----------
