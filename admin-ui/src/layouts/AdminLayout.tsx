@@ -21,6 +21,7 @@ import {
 import { useAuth } from "oidc-js-react";
 import { useTheme } from "../context/ThemeContext";
 import ThemeToggle from "../components/ThemeToggle";
+import { useSettings } from "../hooks/useSettings";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -66,6 +67,7 @@ export default function AdminLayout() {
   const { mode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: settings } = useSettings();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -96,6 +98,34 @@ export default function AdminLayout() {
     return bestMatch;
   };
   const selectedKey = findSelectedKey(menuItems, location.pathname);
+
+  // Filter menu items based on hidden pages settings
+  let hiddenPages: string[] = [];
+  try {
+    if (settings?.admin_ui_hidden_pages) {
+      hiddenPages = typeof settings.admin_ui_hidden_pages === "string"
+        ? JSON.parse(settings.admin_ui_hidden_pages)
+        : settings.admin_ui_hidden_pages;
+    }
+  } catch (e) {
+    console.error("Failed to parse admin_ui_hidden_pages", e);
+  }
+
+  const filterMenuItems = (items: any[]): any[] => {
+    return items
+      .filter((item) => {
+        if (!item.key) return true; // keep dividers/groups
+        return !hiddenPages.includes(item.key as string);
+      })
+      .map((item) => {
+        if (item.children) {
+          return { ...item, children: filterMenuItems(item.children) };
+        }
+        return item;
+      });
+  };
+
+  const visibleMenuItems = filterMenuItems(menuItems);
 
   const handleLogout = () => {
     window.location.href = "/oauth2/logout";
@@ -167,7 +197,7 @@ export default function AdminLayout() {
             theme="dark"
             mode="inline"
             selectedKeys={[selectedKey]}
-            items={menuItems}
+            items={visibleMenuItems}
             onClick={({ key }) => {
               if (key === "/account") {
                 window.open("/account/", "_blank");

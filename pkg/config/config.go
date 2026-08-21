@@ -160,6 +160,11 @@ type Config struct {
 	ProfileFieldProfileURL string
 	ProfileFieldLocale     string
 	ProfileFieldAddress    string
+
+	// Admin UI
+	AdminUIHiddenPages    []string
+	AdminUIHiddenSettings []string
+	AdminUIHiddenColumns  string // JSON string
 }
 
 var defaultConfig = Config{
@@ -226,6 +231,9 @@ var defaultConfig = Config{
 	ProfileFieldProfileURL:             "hidden",
 	ProfileFieldLocale:                 "optional",
 	ProfileFieldAddress:                "optional",
+	AdminUIHiddenPages:                 []string{},
+	AdminUIHiddenSettings:              []string{},
+	AdminUIHiddenColumns:               "{}",
 }
 
 var (

@@ -169,6 +169,17 @@ export default function SettingsPage() {
   const updateSettings = useUpdateSettings();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
+
+  let hiddenSettingsTabs: string[] = [];
+  try {
+    if (settings?.admin_ui_hidden_settings) {
+      hiddenSettingsTabs = typeof settings.admin_ui_hidden_settings === "string"
+        ? JSON.parse(settings.admin_ui_hidden_settings)
+        : settings.admin_ui_hidden_settings;
+    }
+  } catch (e) {
+    console.error("Failed to parse admin_ui_hidden_settings", e);
+  }
   const pkceEnforced = Form.useWatch("pkce_enforce_s256", form);
   const mfaMethod = Form.useWatch("mfa_method", form);
   const smtpHost = Form.useWatch("smtp_host", form);
@@ -293,7 +304,18 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      form.setFieldsValue(settings);
+      const formattedSettings = { ...settings };
+      try {
+        if (typeof formattedSettings.admin_ui_hidden_pages === "string") {
+          formattedSettings.admin_ui_hidden_pages = JSON.parse(formattedSettings.admin_ui_hidden_pages);
+        }
+        if (typeof formattedSettings.admin_ui_hidden_settings === "string") {
+          formattedSettings.admin_ui_hidden_settings = JSON.parse(formattedSettings.admin_ui_hidden_settings);
+        }
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+      form.setFieldsValue(formattedSettings);
     }
   }, [settings, form]);
 
@@ -302,7 +324,9 @@ export default function SettingsPage() {
       // Convert booleans to strings if they are switches
       const processed: Record<string, string> = {};
       Object.entries(values).forEach(([k, v]) => {
-        if (v === true) processed[k] = "true";
+        if (k === "admin_ui_hidden_pages" || k === "admin_ui_hidden_settings") {
+          processed[k] = JSON.stringify(v || []);
+        } else if (v === true) processed[k] = "true";
         else if (v === false) processed[k] = "false";
         else if (v !== undefined && v !== null) processed[k] = String(v);
       });
@@ -1010,6 +1034,70 @@ export default function SettingsPage() {
               ),
             },
             {
+              key: "9",
+              label: "Admin UI",
+              children: (
+                <TabContent>
+                  <Form.Item
+                    label="Hidden Pages"
+                    name="admin_ui_hidden_pages"
+                    tooltip="Select pages to hide from the navigation menu."
+                  >
+                    <Select
+                      mode="multiple"
+                      placeholder="Select pages to hide"
+                      options={[
+                        { label: "Users", value: "/users" },
+                        { label: "Groups", value: "/groups" },
+                        { label: "Sessions", value: "/sessions" },
+                        { label: "Tokens", value: "/tokens" },
+                        { label: "API Tokens", value: "/api-tokens" },
+                        { label: "Clients", value: "/clients" },
+                        { label: "Federation", value: "/federation" },
+                        { label: "Audit Log", value: "/audit-log" },
+                        { label: "CORS", value: "/cors" },
+                        { label: "Certificates / CA", value: "/ca" },
+                        { label: "Client Certificates", value: "/ca-clients" },
+                        { label: "Server Certificates", value: "/ca-servers" },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="Hidden Settings Tabs"
+                    name="admin_ui_hidden_settings"
+                    tooltip="Select settings tabs to hide from this page."
+                  >
+                    <Select
+                      mode="multiple"
+                      placeholder="Select tabs to hide"
+                      options={[
+                        { label: "Login & Registration", value: "1" },
+                        { label: "Email (SMTP)", value: "2" },
+                        { label: "User Profiles", value: "3" },
+                        { label: "Themes & Styling", value: "4" },
+                        { label: "Tokens & Sessions", value: "5" },
+                        { label: "Maintenance", value: "6" },
+                        { label: "Rate Limiting", value: "7" },
+                        { label: "Backup", value: "8" },
+                        { label: "Admin UI", value: "9" },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="Hidden Columns"
+                    name="admin_ui_hidden_columns"
+                    tooltip={{ title: "JSON object mapping page paths to arrays of column keys to hide.", icon: <ExclamationCircleOutlined /> }}
+                  >
+                    <Input.TextArea
+                      rows={6}
+                      placeholder='{&#10;  "/users": ["email", "created_at"]&#10;}'
+                      style={{ fontFamily: "monospace" }}
+                    />
+                  </Form.Item>
+                </TabContent>
+              ),
+            },
+            {
               key: "8",
               label: "Backup",
               children: (
@@ -1154,7 +1242,7 @@ export default function SettingsPage() {
                 </TabContent>
               ),
             },
-          ]}
+          ].filter(tab => !hiddenSettingsTabs.includes(tab.key))}
         />
 
     </Space>
