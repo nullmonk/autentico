@@ -105,6 +105,9 @@ const (
 	EventOtherSessionsRevoked   Event = "other_sessions_revoked"
 	EventTokenRevoked           Event = "token_revoked"
 	EventDeletionApproved      Event = "deletion_approved"
+	EventApplicationCreated    Event = "application_created"
+	EventApplicationUpdated    Event = "application_updated"
+	EventApplicationDeleted    Event = "application_deleted"
 )
 
 // Detail builds a detail map from key-value string pairs.

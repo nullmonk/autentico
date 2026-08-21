@@ -167,6 +167,34 @@ definitions:
       token:
         type: string
     type: object
+  application.ApplicationCreateRequest:
+    properties:
+      groups:
+        description: Array of group IDs
+        items:
+          type: string
+        type: array
+      icon:
+        type: string
+      name:
+        type: string
+      url:
+        type: string
+    type: object
+  application.ApplicationUpdateRequest:
+    properties:
+      groups:
+        description: Array of group IDs
+        items:
+          type: string
+        type: array
+      icon:
+        type: string
+      name:
+        type: string
+      url:
+        type: string
+    type: object
   appsettings.settingsExport:
     properties:
       exported_at:
@@ -1144,6 +1172,23 @@ paths:
       summary: Get Well-Known Configuration
       tags:
       - oauth2
+  /account/api/applications:
+    get:
+      description: Returns applications that the authenticated user has access to
+        based on group memberships
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - UserAuth: []
+      summary: List user applications
+      tags:
+      - account-applications
   /account/api/connected-providers:
     get:
       description: Returns all external identity providers linked to the authenticated
@@ -2023,6 +2068,118 @@ paths:
       summary: List available routes
       tags:
       - apitokens
+  /admin/api/applications:
+    get:
+      description: Returns all applications
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - AdminAuth: []
+      summary: List applications
+      tags:
+      - admin-applications
+    post:
+      consumes:
+      - application/json
+      description: Creates a new application
+      parameters:
+      - description: Application details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.ApplicationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - AdminAuth: []
+      summary: Create application
+      tags:
+      - admin-applications
+  /admin/api/applications/{id}:
+    delete:
+      description: Deletes an application
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - AdminAuth: []
+      summary: Delete application
+      tags:
+      - admin-applications
+    get:
+      description: Gets an application by ID
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - AdminAuth: []
+      summary: Get application
+      tags:
+      - admin-applications
+    put:
+      consumes:
+      - application/json
+      description: Updates an application
+      parameters:
+      - description: Application ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Application updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.ApplicationUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - AdminAuth: []
+      summary: Update application
+      tags:
+      - admin-applications
   /admin/api/audit-logs:
     get:
       description: Returns a paginated list of audit events with optional filters,
