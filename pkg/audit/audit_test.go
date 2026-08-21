@@ -14,8 +14,8 @@ import (
 	"github.com/eugenioenko/autentico/pkg/jwtutil"
 	"github.com/eugenioenko/autentico/pkg/key"
 	"github.com/eugenioenko/autentico/pkg/model"
-	"github.com/golang-jwt/jwt/v5"
 	testutils "github.com/eugenioenko/autentico/tests/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ type testActor struct {
 	username string
 }
 
-func (a *testActor) GetID() string      { return a.id }
+func (a *testActor) GetID() string       { return a.id }
 func (a *testActor) GetUsername() string { return a.username }
 
 func listParams(sort, order, search string, limit, offset int) api.ListParams {
@@ -357,15 +357,15 @@ func TestAuditLog_ToResponse(t *testing.T) {
 	actorID := "user-1"
 	now := time.Date(2026, 4, 9, 12, 0, 0, 0, time.UTC)
 	log := AuditLog{
-		ID:           "log-1",
-		Event:        "login_success",
-		ActorID:      &actorID,
+		ID:            "log-1",
+		Event:         "login_success",
+		ActorID:       &actorID,
 		ActorUsername: "alice",
-		TargetType:   "user",
-		TargetID:     "user-1",
-		Detail:       `{"method":"password"}`,
-		IPAddress:    "10.0.0.1",
-		CreatedAt:    now,
+		TargetType:    "user",
+		TargetID:      "user-1",
+		Detail:        `{"method":"password"}`,
+		IPAddress:     "10.0.0.1",
+		CreatedAt:     now,
 	}
 
 	resp := log.ToResponse()

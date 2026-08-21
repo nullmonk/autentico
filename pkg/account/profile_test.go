@@ -321,4 +321,3 @@ func TestHandleUpdateProfile_DuplicateUsername(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, rr.Code)
 	assert.Contains(t, rr.Body.String(), "username_taken")
 }
-

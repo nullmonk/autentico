@@ -39,7 +39,7 @@ func TestDeleteFederatedIdentity(t *testing.T) {
 		UserID:         "u1",
 	}
 	_ = CreateFederatedIdentity(fi)
-	
+
 	identities, _ := FederatedIdentitiesByUserID("u1")
 	fiID := identities[0].ID
 

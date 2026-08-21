@@ -136,13 +136,13 @@ func TestLoadIntoConfig_InvalidAudienceJSON(t *testing.T) {
 	testutils.WithConfigOverride(t, func() {
 		// Set original to something known
 		config.Values.AuthAccessTokenAudience = []string{"original"}
-		
+
 		// Set invalid JSON for audience
 		_ = SetSetting("access_token_audience", "invalid-json")
 
 		err := LoadIntoConfig()
 		assert.NoError(t, err)
-		
+
 		// It should NOT have updated the audience
 		assert.Equal(t, []string{"original"}, config.Values.AuthAccessTokenAudience)
 	})

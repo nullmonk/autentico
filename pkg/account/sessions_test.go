@@ -346,4 +346,3 @@ func TestHandleRevokeOtherSessions_DbError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	assert.NotContains(t, rr.Body.String(), "SQL")
 }
-

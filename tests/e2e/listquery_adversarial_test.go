@@ -159,7 +159,7 @@ func TestListEndpoints_ResponseStructure(t *testing.T) {
 		var resp struct {
 			Data struct {
 				Items []json.RawMessage `json:"items"`
-				Total int              `json:"total"`
+				Total int               `json:"total"`
 			} `json:"data"`
 		}
 		require.NoError(t, json.Unmarshal(body, &resp))
@@ -174,7 +174,7 @@ func TestListEndpoints_ResponseStructure(t *testing.T) {
 		var resp struct {
 			Data struct {
 				Items []json.RawMessage `json:"items"`
-				Total int              `json:"total"`
+				Total int               `json:"total"`
 			} `json:"data"`
 		}
 		require.NoError(t, json.Unmarshal(body, &resp))
@@ -188,7 +188,7 @@ func TestListEndpoints_ResponseStructure(t *testing.T) {
 		var resp struct {
 			Data struct {
 				Items []json.RawMessage `json:"items"`
-				Total int              `json:"total"`
+				Total int               `json:"total"`
 			} `json:"data"`
 		}
 		require.NoError(t, json.Unmarshal(body, &resp))
@@ -364,4 +364,3 @@ func TestListEndpoints_DateRangeSemanticAbuse(t *testing.T) {
 		})
 	}
 }
-

@@ -11,10 +11,10 @@ import (
 func TestParseTemplate_Execution(t *testing.T) {
 	// Setup config for helper test
 	config.Bootstrap.AppOAuthPath = "/oauth2"
-	
+
 	tmpl, err := ParseTemplate("login")
 	assert.NoError(t, err)
-	
+
 	var buf bytes.Buffer
 	data := map[string]any{
 		"Title":    "Login",

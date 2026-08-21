@@ -648,7 +648,6 @@ func TestHandleAuthorize_PromptLogin_BypassesSSO(t *testing.T) {
 	assert.NotContains(t, rr.Header().Get("Location"), "code=", "must not issue auth code via SSO bypass")
 }
 
-
 // OIDC Core §3.1.2.1: prompt=consent must skip SSO auto-login and show login form
 func TestHandleAuthorize_PromptConsent_BypassesSSO(t *testing.T) {
 	testutils.WithTestDB(t)

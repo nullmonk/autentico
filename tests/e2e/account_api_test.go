@@ -67,11 +67,11 @@ func TestAccountAPI_ProfileLifecycle(t *testing.T) {
 
 	// 5. PUT /account/api/profile (Update)
 	updateReq := user.UserUpdateRequest{
-		GivenName: "NewGivenName",
+		GivenName:  "NewGivenName",
 		FamilyName: "NewFamilyName",
 	}
 	updateBody, _ := json.Marshal(updateReq)
-	
+
 	req, err = http.NewRequest("PUT", ts.BaseURL+"/account/api/profile", bytes.NewBuffer(updateBody))
 	require.NoError(t, err)
 	req.Header.Set("Authorization", "Bearer "+accessToken)

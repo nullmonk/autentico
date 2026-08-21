@@ -287,7 +287,7 @@ func TestHandleSignup_Post_EmailIsUsername(t *testing.T) {
 	HandleSignup(rr, req)
 
 	assert.Equal(t, http.StatusFound, rr.Code)
-	
+
 	u, _ := user.UserByUsername("user@example.com")
 	assert.Equal(t, "user@example.com", u.Email)
 }

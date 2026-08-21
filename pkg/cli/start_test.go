@@ -79,10 +79,10 @@ func TestValidateBootstrapSecrets_AllSet(t *testing.T) {
 
 func TestSeedClients_Errors(t *testing.T) {
 	testutils.WithTestDB(t)
-	
+
 	// Close DB to trigger errors in seeding
 	db.CloseDB()
-	
+
 	// These should not panic but will log warnings
 	seedAdminClient(false)
 	seedAccountClient()

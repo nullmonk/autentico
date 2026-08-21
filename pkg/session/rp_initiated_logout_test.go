@@ -139,7 +139,7 @@ func TestHandleRpInitiatedLogout_ValidPostLogoutRedirectURI(t *testing.T) {
 	createTestClient(t, clientID, []string{postLogoutURI})
 
 	target := "/oauth2/logout?" + url.Values{
-		"client_id":               {clientID},
+		"client_id":                {clientID},
 		"post_logout_redirect_uri": {postLogoutURI},
 	}.Encode()
 	req := httptest.NewRequest(http.MethodGet, target, nil)
@@ -159,9 +159,9 @@ func TestHandleRpInitiatedLogout_ValidPostLogoutRedirectURIWithState(t *testing.
 	createTestClient(t, clientID, []string{postLogoutURI})
 
 	target := "/oauth2/logout?" + url.Values{
-		"client_id":               {clientID},
+		"client_id":                {clientID},
 		"post_logout_redirect_uri": {postLogoutURI},
-		"state":                   {"abc123"},
+		"state":                    {"abc123"},
 	}.Encode()
 	req := httptest.NewRequest(http.MethodGet, target, nil)
 	rr := httptest.NewRecorder()
@@ -179,7 +179,7 @@ func TestHandleRpInitiatedLogout_UnregisteredPostLogoutRedirectURI_ShowsLogoutPa
 	createTestClient(t, clientID, []string{"https://allowed.example.com/out"})
 
 	target := "/oauth2/logout?" + url.Values{
-		"client_id":               {clientID},
+		"client_id":                {clientID},
 		"post_logout_redirect_uri": {"https://evil.example.com/steal"},
 	}.Encode()
 	req := httptest.NewRequest(http.MethodGet, target, nil)
@@ -195,7 +195,7 @@ func TestHandleRpInitiatedLogout_UnknownClientID_ShowsLogoutPage(t *testing.T) {
 	testutils.WithTestDB(t)
 
 	target := "/oauth2/logout?" + url.Values{
-		"client_id":               {"nonexistent-client"},
+		"client_id":                {"nonexistent-client"},
 		"post_logout_redirect_uri": {"https://example.com/out"},
 	}.Encode()
 	req := httptest.NewRequest(http.MethodGet, target, nil)
@@ -261,4 +261,3 @@ func TestHandleRpInitiatedLogout_InvalidIdTokenHint_StillLoggedOut(t *testing.T)
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Contains(t, rr.Body.String(), "signed out")
 }
-

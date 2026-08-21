@@ -13,11 +13,11 @@ var groupListConfig = api.ListConfig{
 	AllowedSort: map[string]bool{
 		"name": true, "created_at": true, "updated_at": true,
 	},
-	SearchColumns: []string{"name", "description"},
+	SearchColumns:  []string{"name", "description"},
 	AllowedFilters: map[string]bool{},
-	DefaultSort:   "name",
-	MaxLimit:      api.DefaultMaxLimit,
-	TableAlias:    "groups",
+	DefaultSort:    "name",
+	MaxLimit:       api.DefaultMaxLimit,
+	TableAlias:     "groups",
 }
 
 func ListGroupsWithParams(params api.ListParams) ([]GroupResponse, int, error) {

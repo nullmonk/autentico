@@ -155,7 +155,7 @@ func TestAuthenticateUser_LockoutDisabled(t *testing.T) {
 
 func TestAuthenticateUser_LockoutDirect(t *testing.T) {
 	testutils.WithTestDB(t)
-	
+
 	userID := "u1"
 	username := "lockeduser"
 	_, _ = db.GetDB().Exec(`

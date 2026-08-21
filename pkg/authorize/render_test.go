@@ -11,7 +11,7 @@ import (
 
 func TestHandleAuthorize_WithErrorDescription(t *testing.T) {
 	testutils.WithTestDB(t)
-	
+
 	// Trigger renderError with a validation error (missing fields)
 	req := httptest.NewRequest(http.MethodGet, "/oauth2/authorize?error=invalid_request", nil)
 	rr := httptest.NewRecorder()

@@ -18,7 +18,7 @@ import (
 func TestHandleMfaPost_EmailWrongCode(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -109,7 +109,7 @@ func TestHandleMfaPost_EmailEmptyUserEmail(t *testing.T) {
 	testutils.WithTestDB(t)
 	// Create user with EMPTY email (using raw SQL because CreateUser validates it)
 	_, _ = db.GetDB().Exec("INSERT INTO users (id, username, email, password) VALUES ('u1', 'noemail', '', 'pass')")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     "u1",

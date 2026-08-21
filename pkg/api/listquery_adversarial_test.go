@@ -123,12 +123,12 @@ func TestBuildListQuery_SQLInjection_Filters(t *testing.T) {
 func TestBuildListQuery_DisallowedFilters(t *testing.T) {
 	params := ListParams{
 		Filters: map[string]string{
-			"password":                  "secret",
-			"1=1; --":                   "x",
-			"role OR 1=1":               "x",
-			"name UNION SELECT * FROM":  "x",
-			"../../etc/passwd":          "x",
-			"status":                    "active",
+			"password":                 "secret",
+			"1=1; --":                  "x",
+			"role OR 1=1":              "x",
+			"name UNION SELECT * FROM": "x",
+			"../../etc/passwd":         "x",
+			"status":                   "active",
 		},
 	}
 	result := BuildListQuery(params, adversarialConfig)
@@ -397,7 +397,6 @@ func TestBuildListQuery_LIKEWildcardAbuse(t *testing.T) {
 	}
 }
 
-
 // --- Date range semantic abuse ---
 
 func TestParseDateRange_SemanticAbuse(t *testing.T) {
@@ -448,7 +447,6 @@ func TestParseDateRange_SemanticAbuse(t *testing.T) {
 		})
 	}
 }
-
 
 func TestParseDateRange_UnknownColumns(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet,

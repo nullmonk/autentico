@@ -102,7 +102,7 @@ func TestDeactivateAllForUser(t *testing.T) {
 
 	s1, _ := IdpSessionByID("s1")
 	assert.Nil(t, s1) // It returns nil if deactivated (based on read.go)
-	
+
 	s2, _ := IdpSessionByID("s2")
 	assert.Nil(t, s2)
 }
