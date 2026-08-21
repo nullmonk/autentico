@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/eugenioenko/autentico/pkg/config"
 	"github.com/eugenioenko/autentico/pkg/cspnonce"
@@ -32,7 +34,27 @@ func ParseTemplate(name string) (*template.Template, error) {
 			return config.Get().Theme.BrandColor
 		},
 	})
-	return tmpl.ParseFS(FS, "layout.html", name+".html")
+	tmpl, err := tmpl.ParseFS(FS, "layout.html", name+".html")
+	if err != nil {
+		return nil, err
+	}
+
+	templatesDir := config.GetBootstrap().TemplatesDir
+	if templatesDir != "" {
+		for _, tmplName := range []string{"layout", name} {
+			fileName := tmplName + ".html"
+			path := filepath.Join(templatesDir, fileName)
+			content, err := os.ReadFile(path)
+			if err == nil {
+				_, err = tmpl.New(fileName).Parse(string(content))
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return tmpl, nil
 }
 
 // InjectNonce reads the CSP nonce from the request context and adds it to the

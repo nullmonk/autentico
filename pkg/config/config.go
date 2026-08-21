@@ -31,6 +31,8 @@ type BootstrapConfig struct {
 	// a reverse proxy handles TLS and the public URL differs from the
 	// local listen port.
 	AppListenPort string
+	// TemplatesDir allows overriding default templates when running in Docker or similar
+	TemplatesDir string // AUTENTICO_TEMPLATES_DIR
 	// Secrets and cookies
 	AuthAccessTokenSecret       string
 	AuthRefreshTokenSecret      string
@@ -316,6 +318,7 @@ func InitBootstrap() {
 		AppHost:                     host,
 		AppPort:                     port,
 		AppListenPort:               getEnv("AUTENTICO_LISTEN_PORT", port),
+		TemplatesDir:                getEnv("AUTENTICO_TEMPLATES_DIR", ""),
 		AppAuthIssuer:               appURL + oauthPath,
 		AuthAccessTokenSecret:       getEnv("AUTENTICO_ACCESS_TOKEN_SECRET", ""),
 		AuthRefreshTokenSecret:      getEnv("AUTENTICO_REFRESH_TOKEN_SECRET", ""),
