@@ -75,6 +75,9 @@ var defaults = map[string]string{
 	"device_code_expiration":         "10m",
 	"device_code_polling_interval":   "5",
 	"cors_allowed_origins":           "",
+	"admin_ui_hidden_pages":          "[]",
+	"admin_ui_hidden_settings":       "[]",
+	"admin_ui_hidden_columns":        "{}",
 }
 
 // EnsureDefaults writes any missing well-known keys with their default values.
@@ -344,6 +347,22 @@ func LoadIntoConfig() error {
 				cfg.CORSAllowedOrigins = append(cfg.CORSAllowedOrigins, o)
 			}
 		}
+	}
+
+	if v, ok := all["admin_ui_hidden_pages"]; ok {
+		var pages []string
+		if err := json.Unmarshal([]byte(v), &pages); err == nil {
+			cfg.AdminUIHiddenPages = pages
+		}
+	}
+	if v, ok := all["admin_ui_hidden_settings"]; ok {
+		var settings []string
+		if err := json.Unmarshal([]byte(v), &settings); err == nil {
+			cfg.AdminUIHiddenSettings = settings
+		}
+	}
+	if v, ok := all["admin_ui_hidden_columns"]; ok {
+		cfg.AdminUIHiddenColumns = v
 	}
 
 	config.Values = cfg

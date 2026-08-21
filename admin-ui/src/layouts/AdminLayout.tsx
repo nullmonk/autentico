@@ -1,6 +1,6 @@
 import { useState, Suspense } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Layout, Menu, Button, Typography, theme, Avatar, Dropdown, ConfigProvider } from "antd";
+import { Layout, Menu, Button, Typography, theme, Avatar, Dropdown, ConfigProvider, Grid } from "antd";
 import {
   DashboardOutlined,
   AppstoreOutlined,
@@ -22,6 +22,7 @@ import {
 import { useAuth } from "oidc-js-react";
 import { useTheme } from "../context/ThemeContext";
 import ThemeToggle from "../components/ThemeToggle";
+import { useSettings } from "../hooks/useSettings";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -63,11 +64,13 @@ const menuItems: any[] = [
 ];
 
 export default function AdminLayout() {
+  const screens = Grid.useBreakpoint();
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuth();
   const { mode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: settings } = useSettings();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -98,6 +101,34 @@ export default function AdminLayout() {
     return bestMatch;
   };
   const selectedKey = findSelectedKey(menuItems, location.pathname);
+
+  // Filter menu items based on hidden pages settings
+  let hiddenPages: string[] = [];
+  try {
+    if (settings?.admin_ui_hidden_pages) {
+      hiddenPages = typeof settings.admin_ui_hidden_pages === "string"
+        ? JSON.parse(settings.admin_ui_hidden_pages)
+        : settings.admin_ui_hidden_pages;
+    }
+  } catch (e) {
+    console.error("Failed to parse admin_ui_hidden_pages", e);
+  }
+
+  const filterMenuItems = (items: any[]): any[] => {
+    return items
+      .filter((item) => {
+        if (!item.key) return true; // keep dividers/groups
+        return !hiddenPages.includes(item.key as string);
+      })
+      .map((item) => {
+        if (item.children) {
+          return { ...item, children: filterMenuItems(item.children) };
+        }
+        return item;
+      });
+  };
+
+  const visibleMenuItems = filterMenuItems(menuItems);
 
   const handleLogout = () => {
     window.location.href = "/oauth2/logout";
@@ -143,7 +174,7 @@ export default function AdminLayout() {
           },
         }}
       >
-        <Sider trigger={null} collapsible collapsed={collapsed} breakpoint="lg" onBreakpoint={setCollapsed} style={{ background: siderBg, overflow: "auto" }}>
+        <Sider trigger={null} collapsible collapsed={collapsed} collapsedWidth={screens.md ? 80 : 0} breakpoint="lg" onBreakpoint={setCollapsed} style={{ background: siderBg, overflow: "auto", position: !screens.md ? "absolute" : "relative", zIndex: 10, height: "100%" }}>
           <div
             style={{
               height: 64,
@@ -169,7 +200,7 @@ export default function AdminLayout() {
             theme="dark"
             mode="inline"
             selectedKeys={[selectedKey]}
-            items={menuItems}
+            items={visibleMenuItems}
             onClick={({ key }) => {
               if (key === "/account") {
                 window.open("/account/", "_blank");
@@ -189,7 +220,7 @@ export default function AdminLayout() {
       <Layout style={{ overflow: "hidden" }}>
         <Header
           style={{
-            padding: "0 24px",
+            padding: screens.md ? "0 24px" : "0 16px",
             background: colorBgContainer,
             display: "flex",
             alignItems: "center",
@@ -210,7 +241,7 @@ export default function AdminLayout() {
                   icon={!user?.claims?.picture && <UserOutlined />}
                   style={{ backgroundColor: "#ff7b00" }}
                 />
-                <Text>{username}</Text>
+                {screens.md && <Text>{username}</Text>}
                 <DownOutlined style={{ fontSize: 11, opacity: 0.6 }} />
               </div>
             </Dropdown>
@@ -218,8 +249,8 @@ export default function AdminLayout() {
         </Header>
         <Content
           style={{
-            margin: 24,
-            padding: 24,
+            margin: screens.md ? 24 : 8,
+            padding: screens.md ? 24 : 12,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
             overflow: "hidden",
