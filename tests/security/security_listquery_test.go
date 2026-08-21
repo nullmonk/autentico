@@ -186,7 +186,7 @@ func TestListEndpoints_SQLInjection_GroupFilterBypass(t *testing.T) {
 				var resp struct {
 					Data struct {
 						Items []json.RawMessage `json:"items"`
-						Total int               `json:"total"`
+						Total int              `json:"total"`
 					} `json:"data"`
 				}
 				err := json.Unmarshal(body, &resp)

@@ -110,9 +110,9 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 			}
 
 			r = setAuthInfo(r, &AuthInfo{
-				User:   usr,
-				Token:  tokenString,
-				Claims: claims,
+				User:    usr,
+				Token:   tokenString,
+				Claims:  claims,
 			})
 			next.ServeHTTP(w, r)
 			return

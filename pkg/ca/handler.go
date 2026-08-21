@@ -702,14 +702,14 @@ func HandleGenerateServerCertFromCSR(w http.ResponseWriter, r *http.Request) {
 	hostsStr := string(hostsJson)
 
 	template := x509.Certificate{
-		SerialNumber:          serialNumber,
-		Subject:               csr.Subject,
-		DNSNames:              csr.DNSNames,
-		IPAddresses:           csr.IPAddresses,
-		NotBefore:             time.Now(),
-		NotAfter:              expireDate,
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		SerialNumber: serialNumber,
+		Subject:      csr.Subject,
+		DNSNames:     csr.DNSNames,
+		IPAddresses:  csr.IPAddresses,
+		NotBefore:    time.Now(),
+		NotAfter:     expireDate,
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
 	}

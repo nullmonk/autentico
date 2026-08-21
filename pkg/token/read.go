@@ -54,15 +54,15 @@ var tokenListConfig = api.ListConfig{
 }
 
 type TokenRow struct {
-	ID                   string
-	UserID               *string
-	Username             string
-	Email                string
-	Scope                string
-	GrantType            string
-	AccessTokenExpiresAt time.Time
-	IssuedAt             time.Time
-	RevokedAt            *time.Time
+	ID                    string
+	UserID                *string
+	Username              string
+	Email                 string
+	Scope                 string
+	GrantType             string
+	AccessTokenExpiresAt  time.Time
+	IssuedAt              time.Time
+	RevokedAt             *time.Time
 }
 
 func ListTokensWithParams(params api.ListParams, dateWhere string, dateArgs []any) ([]TokenRow, int, error) {

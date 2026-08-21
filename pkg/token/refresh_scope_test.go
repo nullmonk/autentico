@@ -28,7 +28,7 @@ func TestIsScopeSubset(t *testing.T) {
 		{"openid offline_access", "openid profile email", false}, // offline_access not in original
 		{"openid profile admin", "openid profile email", false},  // admin not in original
 		{"", "openid profile email", true},                       // empty requested = subset
-		{"openid", "", false},                                    // non-empty requested, empty original
+		{"openid", "", false},                                     // non-empty requested, empty original
 		{"openid", "openid", true},                               // exact match
 	}
 	for _, tc := range tests {

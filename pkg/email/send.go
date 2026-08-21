@@ -25,9 +25,9 @@ var bodyOTPRaw string
 var bodyMagicLinkRaw string
 
 var (
-	bodyTestTmpl      = template.Must(template.New("body_test").Parse(bodyTestRaw))
-	bodyVerifyTmpl    = template.Must(template.New("body_verify").Parse(bodyVerifyRaw))
-	bodyResetTmpl     = template.Must(template.New("body_reset").Parse(bodyResetRaw))
+	bodyTestTmpl   = template.Must(template.New("body_test").Parse(bodyTestRaw))
+	bodyVerifyTmpl = template.Must(template.New("body_verify").Parse(bodyVerifyRaw))
+	bodyResetTmpl  = template.Must(template.New("body_reset").Parse(bodyResetRaw))
 	bodyOTPTmpl       = template.Must(template.New("body_otp").Parse(bodyOTPRaw))
 	bodyMagicLinkTmpl = template.Must(template.New("body_magic_link").Parse(bodyMagicLinkRaw))
 )

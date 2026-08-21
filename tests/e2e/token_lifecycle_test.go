@@ -408,11 +408,11 @@ func TestCrossClient_RevokeIsNoOp(t *testing.T) {
 	createTestClient(t, ts, adminToken, map[string]interface{}{
 		"client_name":                "Cross Client",
 		"client_secret":              "cross-secret",
-		"redirect_uris":              []string{"http://localhost:3000/callback"},
-		"grant_types":                []string{"authorization_code", "refresh_token"},
-		"response_types":             []string{"code"},
-		"scopes":                     "openid profile email",
-		"client_type":                "confidential",
+		"redirect_uris":             []string{"http://localhost:3000/callback"},
+		"grant_types":               []string{"authorization_code", "refresh_token"},
+		"response_types":            []string{"code"},
+		"scopes":                    "openid profile email",
+		"client_type":               "confidential",
 		"token_endpoint_auth_method": "client_secret_basic",
 	})
 	// Find the client_id assigned by the server

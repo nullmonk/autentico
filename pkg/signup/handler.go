@@ -127,16 +127,16 @@ func handleSignupPost(w http.ResponseWriter, r *http.Request) {
 		"address_country":     r.FormValue("address_country"),
 	}
 	fieldVisibility := map[string]string{
-		"given_name":          cfg.ProfileFieldGivenName,
-		"family_name":         cfg.ProfileFieldFamilyName,
-		"phone_number":        cfg.ProfileFieldPhone,
-		"picture":             cfg.ProfileFieldPicture,
-		"locale":              cfg.ProfileFieldLocale,
-		"address_street":      cfg.ProfileFieldAddress,
-		"address_locality":    cfg.ProfileFieldAddress,
-		"address_region":      cfg.ProfileFieldAddress,
+		"given_name":   cfg.ProfileFieldGivenName,
+		"family_name":  cfg.ProfileFieldFamilyName,
+		"phone_number": cfg.ProfileFieldPhone,
+		"picture":      cfg.ProfileFieldPicture,
+		"locale":       cfg.ProfileFieldLocale,
+		"address_street": cfg.ProfileFieldAddress,
+		"address_locality": cfg.ProfileFieldAddress,
+		"address_region": cfg.ProfileFieldAddress,
 		"address_postal_code": cfg.ProfileFieldAddress,
-		"address_country":     cfg.ProfileFieldAddress,
+		"address_country": cfg.ProfileFieldAddress,
 	}
 	for field, visibility := range fieldVisibility {
 		if visibility == "required" && profileFields[field] == "" {
@@ -267,8 +267,8 @@ func RenderSignup(w http.ResponseWriter, r *http.Request, params SignupParams, e
 		"AuthorizeSig":        params.AuthorizeSig,
 		"Error":               errMsg,
 		"AuthMode":            cfg.AuthMode,
-		"ProfileFieldEmail":   cfg.ProfileFieldEmail,
-		"ShowOptionalFields":  cfg.SignupShowOptionalFields,
+		"ProfileFieldEmail":        cfg.ProfileFieldEmail,
+		"ShowOptionalFields":       cfg.SignupShowOptionalFields,
 		csrf.TemplateTag:      csrf.TemplateField(r),
 		"ThemeTitle":          cfg.Theme.Title,
 		"ThemeLogoUrl":        cfg.Theme.LogoUrl,

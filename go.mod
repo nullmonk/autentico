@@ -8,7 +8,6 @@ require (
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/go-webauthn/webauthn v0.15.0
-	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/csrf v1.7.3
@@ -22,10 +21,8 @@ require (
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/crypto v0.43.0
 	golang.org/x/oauth2 v0.35.0
-	golang.org/x/term v0.36.0
 	golang.org/x/time v0.14.0
 	modernc.org/sqlite v1.36.3
-	software.sslmate.com/src/go-pkcs12 v0.7.3
 )
 
 require (
@@ -43,6 +40,7 @@ require (
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/go-webauthn/x v0.1.26 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/go-tpm v0.9.6 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -58,9 +56,11 @@ require (
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
 	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
+	software.sslmate.com/src/go-pkcs12 v0.7.3 // indirect
 )

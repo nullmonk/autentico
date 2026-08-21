@@ -26,26 +26,26 @@ type User struct {
 	IsEmailVerified     bool
 	DeactivatedAt       *time.Time
 	RegisteredAt        *time.Time
-	UpdatedAt           time.Time
+	UpdatedAt time.Time
 	// OIDC standard profile claims
-	GivenName             string
-	FamilyName            string
-	MiddleName            string
-	Nickname              string
-	Website               string
-	Gender                string
-	Birthdate             string
-	ProfileURL            string
-	PhoneNumber           string
-	PhoneNumberVerified   bool
-	Picture               string
-	Locale                string
-	Zoneinfo              string
-	AddressStreet         string
-	AddressLocality       string
-	AddressRegion         string
-	AddressPostalCode     string
-	AddressCountry        string
+	GivenName         string
+	FamilyName        string
+	MiddleName        string
+	Nickname          string
+	Website           string
+	Gender            string
+	Birthdate         string
+	ProfileURL          string
+	PhoneNumber         string
+	PhoneNumberVerified bool
+	Picture             string
+	Locale            string
+	Zoneinfo          string
+	AddressStreet     string
+	AddressLocality   string
+	AddressRegion     string
+	AddressPostalCode string
+	AddressCountry    string
 	RequirePasswordChange bool
 }
 
@@ -61,25 +61,25 @@ type UserResponse struct {
 	TotpVerified        bool       `json:"totp_verified"`
 	Groups              []string   `json:"groups,omitempty"`
 	// OIDC standard profile claims
-	GivenName             string `json:"given_name,omitempty"`
-	FamilyName            string `json:"family_name,omitempty"`
-	MiddleName            string `json:"middle_name,omitempty"`
-	Nickname              string `json:"nickname,omitempty"`
-	Website               string `json:"website,omitempty"`
-	Gender                string `json:"gender,omitempty"`
-	Birthdate             string `json:"birthdate,omitempty"`
-	ProfileURL            string `json:"profile,omitempty"`
-	PhoneNumber           string `json:"phone_number,omitempty"`
-	PhoneNumberVerified   bool   `json:"phone_number_verified,omitempty"`
-	Picture               string `json:"picture,omitempty"`
-	Locale                string `json:"locale,omitempty"`
-	Zoneinfo              string `json:"zoneinfo,omitempty"`
-	AddressStreet         string `json:"address_street,omitempty"`
-	AddressLocality       string `json:"address_locality,omitempty"`
-	AddressRegion         string `json:"address_region,omitempty"`
-	AddressPostalCode     string `json:"address_postal_code,omitempty"`
-	AddressCountry        string `json:"address_country,omitempty"`
-	RequirePasswordChange bool   `json:"require_password_change"`
+	GivenName           string `json:"given_name,omitempty"`
+	FamilyName          string `json:"family_name,omitempty"`
+	MiddleName          string `json:"middle_name,omitempty"`
+	Nickname            string `json:"nickname,omitempty"`
+	Website             string `json:"website,omitempty"`
+	Gender              string `json:"gender,omitempty"`
+	Birthdate           string `json:"birthdate,omitempty"`
+	ProfileURL          string `json:"profile,omitempty"`
+	PhoneNumber         string `json:"phone_number,omitempty"`
+	PhoneNumberVerified bool   `json:"phone_number_verified,omitempty"`
+	Picture             string `json:"picture,omitempty"`
+	Locale            string `json:"locale,omitempty"`
+	Zoneinfo          string `json:"zoneinfo,omitempty"`
+	AddressStreet     string `json:"address_street,omitempty"`
+	AddressLocality   string `json:"address_locality,omitempty"`
+	AddressRegion     string `json:"address_region,omitempty"`
+	AddressPostalCode string `json:"address_postal_code,omitempty"`
+	AddressCountry    string `json:"address_country,omitempty"`
+	RequirePasswordChange bool `json:"require_password_change"`
 }
 
 // GetID satisfies the audit.Actor interface.
@@ -90,33 +90,33 @@ func (u *User) GetUsername() string { return u.Username }
 
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
-		ID:                    u.ID,
-		Username:              u.Username,
-		Email:                 u.Email,
-		CreatedAt:             u.CreatedAt,
-		Role:                  u.Role,
-		FailedLoginAttempts:   u.FailedLoginAttempts,
-		LockedUntil:           u.LockedUntil,
-		IsEmailVerified:       u.IsEmailVerified,
-		TotpVerified:          u.TotpVerified,
-		GivenName:             u.GivenName,
-		FamilyName:            u.FamilyName,
-		MiddleName:            u.MiddleName,
-		Nickname:              u.Nickname,
-		Website:               u.Website,
-		Gender:                u.Gender,
-		Birthdate:             u.Birthdate,
-		ProfileURL:            u.ProfileURL,
-		PhoneNumber:           u.PhoneNumber,
-		PhoneNumberVerified:   u.PhoneNumberVerified,
-		Picture:               u.Picture,
-		Locale:                u.Locale,
-		Zoneinfo:              u.Zoneinfo,
-		AddressStreet:         u.AddressStreet,
-		AddressLocality:       u.AddressLocality,
-		AddressRegion:         u.AddressRegion,
-		AddressPostalCode:     u.AddressPostalCode,
-		AddressCountry:        u.AddressCountry,
+		ID:                  u.ID,
+		Username:            u.Username,
+		Email:               u.Email,
+		CreatedAt:           u.CreatedAt,
+		Role:                u.Role,
+		FailedLoginAttempts: u.FailedLoginAttempts,
+		LockedUntil:         u.LockedUntil,
+		IsEmailVerified:     u.IsEmailVerified,
+		TotpVerified:        u.TotpVerified,
+		GivenName:           u.GivenName,
+		FamilyName:          u.FamilyName,
+		MiddleName:          u.MiddleName,
+		Nickname:            u.Nickname,
+		Website:             u.Website,
+		Gender:              u.Gender,
+		Birthdate:           u.Birthdate,
+		ProfileURL:          u.ProfileURL,
+		PhoneNumber:         u.PhoneNumber,
+		PhoneNumberVerified: u.PhoneNumberVerified,
+		Picture:             u.Picture,
+		Locale:              u.Locale,
+		Zoneinfo:            u.Zoneinfo,
+		AddressStreet:       u.AddressStreet,
+		AddressLocality:     u.AddressLocality,
+		AddressRegion:       u.AddressRegion,
+		AddressPostalCode:   u.AddressPostalCode,
+		AddressCountry:      u.AddressCountry,
 		RequirePasswordChange: u.RequirePasswordChange,
 	}
 }
@@ -175,25 +175,25 @@ type UserUpdateRequest struct {
 	IsEmailVerified *bool  `json:"is_email_verified,omitempty"`
 	TotpVerified    *bool  `json:"totp_verified,omitempty"`
 	// OIDC standard profile claims
-	GivenName             string `json:"given_name,omitempty"`
-	FamilyName            string `json:"family_name,omitempty"`
-	MiddleName            string `json:"middle_name,omitempty"`
-	Nickname              string `json:"nickname,omitempty"`
-	Website               string `json:"website,omitempty"`
-	Gender                string `json:"gender,omitempty"`
-	Birthdate             string `json:"birthdate,omitempty"`
-	ProfileURL            string `json:"profile,omitempty"`
-	PhoneNumber           string `json:"phone_number,omitempty"`
-	PhoneNumberVerified   *bool  `json:"phone_number_verified,omitempty"`
-	Picture               string `json:"picture,omitempty"`
-	Locale                string `json:"locale,omitempty"`
-	Zoneinfo              string `json:"zoneinfo,omitempty"`
-	AddressStreet         string `json:"address_street,omitempty"`
-	AddressLocality       string `json:"address_locality,omitempty"`
-	AddressRegion         string `json:"address_region,omitempty"`
-	AddressPostalCode     string `json:"address_postal_code,omitempty"`
-	AddressCountry        string `json:"address_country,omitempty"`
-	RequirePasswordChange *bool  `json:"require_password_change,omitempty"`
+	GivenName         string `json:"given_name,omitempty"`
+	FamilyName        string `json:"family_name,omitempty"`
+	MiddleName        string `json:"middle_name,omitempty"`
+	Nickname          string `json:"nickname,omitempty"`
+	Website           string `json:"website,omitempty"`
+	Gender            string `json:"gender,omitempty"`
+	Birthdate         string `json:"birthdate,omitempty"`
+	ProfileURL          string `json:"profile,omitempty"`
+	PhoneNumber         string `json:"phone_number,omitempty"`
+	PhoneNumberVerified *bool  `json:"phone_number_verified,omitempty"`
+	Picture           string `json:"picture,omitempty"`
+	Locale            string `json:"locale,omitempty"`
+	Zoneinfo          string `json:"zoneinfo,omitempty"`
+	AddressStreet     string `json:"address_street,omitempty"`
+	AddressLocality   string `json:"address_locality,omitempty"`
+	AddressRegion     string `json:"address_region,omitempty"`
+	AddressPostalCode string `json:"address_postal_code,omitempty"`
+	AddressCountry    string `json:"address_country,omitempty"`
+	RequirePasswordChange *bool `json:"require_password_change,omitempty"`
 }
 
 // validateURLScheme checks that a URL string uses http or https scheme.

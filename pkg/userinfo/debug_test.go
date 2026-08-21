@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eugenioenko/autentico/pkg/jwtutil"
-	"github.com/eugenioenko/autentico/pkg/key"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/eugenioenko/autentico/pkg/key"
+	"github.com/eugenioenko/autentico/pkg/jwtutil"
 	"github.com/stretchr/testify/assert"
 )
 

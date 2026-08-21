@@ -61,9 +61,9 @@ func ParseFilters(r *http.Request, allowed map[string]bool) map[string]string {
 
 // dateFormats lists the accepted date/datetime formats in order of preference.
 var dateFormats = []string{
-	time.RFC3339,          // 2006-01-02T15:04:05Z07:00
-	"2006-01-02T15:04:05", // datetime without timezone
-	"2006-01-02",          // date only
+	time.RFC3339,            // 2006-01-02T15:04:05Z07:00
+	"2006-01-02T15:04:05",  // datetime without timezone
+	"2006-01-02",           // date only
 }
 
 // parseDate attempts to parse a date string using the accepted formats.

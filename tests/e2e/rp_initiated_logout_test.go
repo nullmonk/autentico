@@ -116,9 +116,9 @@ func TestRpInitiatedLogout_PostLogoutRedirectWithState(t *testing.T) {
 
 	// GET /oauth2/logout with client_id, post_logout_redirect_uri, and state.
 	logoutURL := ts.BaseURL + "/oauth2/logout?" + url.Values{
-		"client_id":                {clientID},
+		"client_id":               {clientID},
 		"post_logout_redirect_uri": {postLogoutURI},
-		"state":                    {"logout-state-xyz"},
+		"state":                   {"logout-state-xyz"},
 	}.Encode()
 
 	resp, err := ts.Client.Get(logoutURL)
@@ -145,7 +145,7 @@ func TestRpInitiatedLogout_UnregisteredURIShowsLogoutPage(t *testing.T) {
 	clientID := clientResp["client_id"].(string)
 
 	logoutURL := ts.BaseURL + "/oauth2/logout?" + url.Values{
-		"client_id":                {clientID},
+		"client_id":               {clientID},
 		"post_logout_redirect_uri": {"http://evil.example.com/steal"},
 	}.Encode()
 

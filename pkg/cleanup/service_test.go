@@ -72,8 +72,8 @@ func TestRun_DeletesExpiredAuthCodes(t *testing.T) {
 	old := xid.New().String()
 	recent := xid.New().String()
 
-	insertExpiredAuthCode(t, old, 48*time.Hour)   // expired 48h ago → should be deleted
-	insertExpiredAuthCode(t, recent, 1*time.Hour) // expired 1h ago  → within 24h retention, kept
+	insertExpiredAuthCode(t, old, 48*time.Hour)    // expired 48h ago → should be deleted
+	insertExpiredAuthCode(t, recent, 1*time.Hour)  // expired 1h ago  → within 24h retention, kept
 
 	Run(24 * time.Hour)
 

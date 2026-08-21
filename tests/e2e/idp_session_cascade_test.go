@@ -20,13 +20,12 @@ import (
 
 // TestIdpSessionCascade_FullFlow exercises the end-to-end chain introduced by
 // this feature:
-//
-//	authorize+login creates an idp_session and sets the cookie; the auth_code
-//	it issues carries idp_session_id, which /oauth2/token copies onto the
-//	sessions row. Listing /account/api/sessions returns that idp_session with
-//	active_apps_count=1 and is_current=true. Deleting it cascade-deactivates
-//	the OAuth session and revokes its access token — the next /account/api
-//	request with that token must be rejected.
+//   authorize+login creates an idp_session and sets the cookie; the auth_code
+//   it issues carries idp_session_id, which /oauth2/token copies onto the
+//   sessions row. Listing /account/api/sessions returns that idp_session with
+//   active_apps_count=1 and is_current=true. Deleting it cascade-deactivates
+//   the OAuth session and revokes its access token — the next /account/api
+//   request with that token must be rejected.
 func TestIdpSessionCascade_FullFlow(t *testing.T) {
 	ts := startTestServer(t)
 

@@ -12,11 +12,11 @@ import (
 // bucket. A request must pass both to be allowed. Entries are evicted by
 // Cleanup after being idle for a configurable duration.
 type Store struct {
-	mu          sync.Mutex
-	limiters    map[string]*entry
-	rps         rate.Limit
-	burst       int
-	rpm         rate.Limit
+	mu         sync.Mutex
+	limiters   map[string]*entry
+	rps        rate.Limit
+	burst      int
+	rpm        rate.Limit
 	burstPerMin int
 }
 
