@@ -214,7 +214,7 @@ function GroupMembersView({
           dataSource={members ?? []}
           rowKey="user_id"
           loading={isLoading}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={false}
           size="small"
         />
@@ -420,7 +420,7 @@ export default function GroupsPage() {
           rowKey="id"
           loading={isLoading}
           onChange={handleTableChange}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={{
             current: Math.floor((listParams.offset ?? 0) / (listParams.limit ?? DEFAULT_PAGE_SIZE)) + 1,
             pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,

@@ -1,6 +1,6 @@
 import { useState, Suspense } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Layout, Menu, Button, Typography, theme, Avatar, Dropdown, ConfigProvider } from "antd";
+import { Layout, Menu, Button, Typography, theme, Avatar, Dropdown, ConfigProvider, Grid } from "antd";
 import {
   DashboardOutlined,
   AppstoreOutlined,
@@ -62,6 +62,7 @@ const menuItems: any[] = [
 ];
 
 export default function AdminLayout() {
+  const screens = Grid.useBreakpoint();
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuth();
   const { mode } = useTheme();
@@ -171,7 +172,7 @@ export default function AdminLayout() {
           },
         }}
       >
-        <Sider trigger={null} collapsible collapsed={collapsed} breakpoint="lg" onBreakpoint={setCollapsed} style={{ background: siderBg, overflow: "auto" }}>
+        <Sider trigger={null} collapsible collapsed={collapsed} collapsedWidth={screens.md ? 80 : 0} breakpoint="lg" onBreakpoint={setCollapsed} style={{ background: siderBg, overflow: "auto", position: !screens.md ? "absolute" : "relative", zIndex: 10, height: "100%" }}>
           <div
             style={{
               height: 64,
@@ -217,7 +218,7 @@ export default function AdminLayout() {
       <Layout style={{ overflow: "hidden" }}>
         <Header
           style={{
-            padding: "0 24px",
+            padding: screens.md ? "0 24px" : "0 16px",
             background: colorBgContainer,
             display: "flex",
             alignItems: "center",
@@ -238,7 +239,7 @@ export default function AdminLayout() {
                   icon={!user?.claims?.picture && <UserOutlined />}
                   style={{ backgroundColor: "#ff7b00" }}
                 />
-                <Text>{username}</Text>
+                {screens.md && <Text>{username}</Text>}
                 <DownOutlined style={{ fontSize: 11, opacity: 0.6 }} />
               </div>
             </Dropdown>
@@ -246,8 +247,8 @@ export default function AdminLayout() {
         </Header>
         <Content
           style={{
-            margin: 24,
-            padding: 24,
+            margin: screens.md ? 24 : 8,
+            padding: screens.md ? 24 : 12,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
             overflow: "hidden",
