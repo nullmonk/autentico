@@ -57,6 +57,11 @@ func ActorFromRequest(r *http.Request) Actor {
 	if err != nil {
 		return nil
 	}
+
+	if claims.Role == "api" {
+		return SimpleActor{ID: claims.ID, Username: claims.PreferredUsername}
+	}
+
 	var username string
 	if err := db.GetDB().QueryRow("SELECT username FROM users WHERE id = ?", claims.UserID).Scan(&username); err != nil {
 		slog.Warn("audit: failed to look up username for actor", "error", err, "user_id", claims.UserID)
