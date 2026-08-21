@@ -18,6 +18,7 @@ import (
 	"github.com/eugenioenko/autentico/pkg/account"
 	"github.com/eugenioenko/autentico/pkg/admin"
 	"github.com/eugenioenko/autentico/pkg/apitoken"
+	"github.com/eugenioenko/autentico/pkg/application"
 	"github.com/eugenioenko/autentico/pkg/appsettings"
 	"github.com/eugenioenko/autentico/pkg/audit"
 	"github.com/eugenioenko/autentico/pkg/authorize"
@@ -199,6 +200,11 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("GET /admin/api/users/{id}/idp-sessions", adminAPI(idpsession.HandleListUserIdpSessions))
 	mux.Handle("GET /admin/api/idp-sessions/{id}/sessions", adminAPI(session.HandleListIdpSessionSessions))
 	mux.Handle("DELETE /admin/api/idp-sessions/{id}", adminAPI(idpsession.HandleForceLogoutIdpSession))
+	mux.Handle("GET /admin/api/applications", adminAPI(application.HandleListApplications))
+	mux.Handle("POST /admin/api/applications", adminAPI(application.HandleCreateApplication))
+	mux.Handle("GET /admin/api/applications/{id}", adminAPI(application.HandleGetApplication))
+	mux.Handle("PUT /admin/api/applications/{id}", adminAPI(application.HandleUpdateApplication))
+	mux.Handle("DELETE /admin/api/applications/{id}", adminAPI(application.HandleDeleteApplication))
 	mux.Handle("GET /admin/api/federation", adminAPI(federation.HandleListProviders))
 	mux.Handle("POST /admin/api/federation", adminAPI(federation.HandleCreateProvider))
 	mux.Handle("GET /admin/api/federation/{id}", adminAPI(federation.HandleGetProvider))
@@ -246,6 +252,7 @@ func RunStart(c *cli.Context) error {
 	// -------------------------------------------------------------------------
 	// Account self-service API (audience: autentico-account or autentico-admin)
 	// -------------------------------------------------------------------------
+	mux.Handle("GET /account/api/applications", accountAPI(application.HandleListUserApplications))
 	mux.Handle("GET /account/api/profile", accountAPI(account.HandleGetProfile))
 	mux.Handle("PUT /account/api/profile", accountAPI(account.HandleUpdateProfile))
 	mux.Handle("POST /account/api/password", rateLimited(middleware.AccountAuthMiddleware(http.HandlerFunc(account.HandleUpdatePassword))))

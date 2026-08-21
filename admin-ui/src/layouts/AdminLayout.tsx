@@ -4,6 +4,7 @@ import { Layout, Menu, Button, Typography, theme, Avatar, Dropdown, ConfigProvid
 import {
   DashboardOutlined,
   AppstoreOutlined,
+  AppstoreAddOutlined,
   UserOutlined,
   DesktopOutlined,
   KeyOutlined,
@@ -28,6 +29,7 @@ const { Text } = Typography;
 
 const menuItems: any[] = [
   { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
+  { key: "/applications", icon: <AppstoreAddOutlined />, label: "Applications" },
   { key: "/users", icon: <UserOutlined />, label: "Users" },
   { key: "/groups", icon: <TeamOutlined />, label: "Groups" },
   { key: "/sessions", icon: <DesktopOutlined />, label: "Sessions" },

@@ -16,9 +16,38 @@ const Dashboard: React.FC = () => {
     queryKey: ['mfa'],
     queryFn: () => api.get('/mfa').then((res) => res.data.data),
   });
+  const { data: apps = [] } = useQuery({
+    queryKey: ['applications'],
+    queryFn: () => api.get('/applications').then((res) => res.data.data),
+  });
 
   return (
     <div className="space-y-4" data-testid="account-dashboard">
+      {apps && apps.length > 0 && (
+        <Card title="Applications">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+            {apps.map((app: any) => (
+              <a
+                key={app.id}
+                href={app.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg border border-theme-fg/10 hover:bg-theme-fg/5 transition-colors"
+              >
+                {app.icon ? (
+                  <img src={app.icon} alt={app.name} className="w-8 h-8 object-contain rounded" />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-theme-fg/10 flex items-center justify-center text-sm font-semibold">
+                    {app.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="font-medium text-sm flex-1 truncate">{app.name}</span>
+              </a>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card
         title="Account Security"
         action={

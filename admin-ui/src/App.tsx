@@ -35,6 +35,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const CallbackPage = lazy(() => import("./pages/CallbackPage"));
 const AccessDeniedPage = lazy(() => import("./pages/AccessDeniedPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ApplicationsPage = lazy(() => import("./pages/ApplicationsPage"));
 const ClientsPage = lazy(() => import("./pages/ClientsPage"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 const SessionsPage = lazy(() => import("./pages/SessionsPage"));
@@ -115,6 +116,7 @@ function ThemedApp() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<AdminLayout />}>
                   <Route index element={<DashboardPage />} />
+                  <Route path="applications" element={<ApplicationsPage />} />
                   <Route path="clients" element={<ClientsPage />} />
                   <Route path="users" element={<UsersPage />} />
                   <Route path="groups" element={<GroupsPage />} />
