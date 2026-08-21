@@ -24,6 +24,7 @@ import { useTableScrollY } from "../hooks/useTableScrollY";
 import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 const { Text } = Typography;
 
@@ -186,7 +187,7 @@ export default function AuditLogPage() {
     []
   );
 
-  const columns: ColumnsType<AuditLogEntry> = [
+  const rawColumns0: ColumnsType<AuditLogEntry> = [
     {
       title: "Event",
       dataIndex: "event",
@@ -281,6 +282,8 @@ export default function AuditLogPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/audit-log', rawColumns0);
+
 
   if (error) return <Alert type="error" message="Failed to load audit logs" />;
 

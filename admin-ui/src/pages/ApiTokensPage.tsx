@@ -32,6 +32,7 @@ import { useTableScrollY } from "../hooks/useTableScrollY";
 import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function formatDate(date: string | null): string {
   if (!date) return "—";
@@ -142,7 +143,7 @@ export default function ApiTokensPage() {
     [defaultPageSize]
   );
 
-  const columns: ColumnsType<ApiToken> = [
+  const rawColumns0: ColumnsType<ApiToken> = [
     {
       title: "Token ID",
       dataIndex: "id",
@@ -218,6 +219,8 @@ export default function ApiTokensPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/api-tokens', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load API tokens" />;

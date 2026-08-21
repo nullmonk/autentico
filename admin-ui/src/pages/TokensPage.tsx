@@ -25,6 +25,7 @@ import { useTableScrollY } from "../hooks/useTableScrollY";
 import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function formatDate(date: string | null): string {
   if (!date) return "—";
@@ -165,7 +166,7 @@ export default function TokensPage() {
     }));
   }, []);
 
-  const columns: ColumnsType<AdminTokenResponse> = [
+  const rawColumns0: ColumnsType<AdminTokenResponse> = [
     {
       title: "Token ID",
       dataIndex: "id",
@@ -268,6 +269,8 @@ export default function TokensPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/tokens', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load tokens" />;

@@ -27,6 +27,7 @@ import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import GrantChips from "../components/GrantChips";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 
 export default function ClientsPage() {
@@ -101,7 +102,7 @@ export default function ClientsPage() {
     }));
   }, []);
 
-  const columns: ColumnsType<ClientInfoResponse> = [
+  const rawColumns0: ColumnsType<ClientInfoResponse> = [
     {
       title: "Name",
       dataIndex: "client_name",
@@ -197,6 +198,8 @@ export default function ClientsPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/clients', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load clients" />;

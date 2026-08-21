@@ -38,6 +38,7 @@ import type { Group, GroupMember } from "../types/group";
 import { useTableScrollY } from "../hooks/useTableScrollY";
 import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function GroupMembersView({
   group,
@@ -120,7 +121,7 @@ function GroupMembersView({
     return { id, label: user ? user.username : id };
   });
 
-  const columns: ColumnsType<GroupMember> = [
+  const rawColumns0: ColumnsType<GroupMember> = [
     { title: "Username", dataIndex: "username", key: "username" },
     { title: "Email", dataIndex: "email", key: "email" },
     {
@@ -150,6 +151,8 @@ function GroupMembersView({
       ),
     },
   ];
+  const columns = useHiddenColumns('/groups', rawColumns0);
+
 
   return (
     <>
@@ -319,7 +322,7 @@ export default function GroupsPage() {
     );
   }
 
-  const columns: ColumnsType<Group> = [
+  const rawColumns1: ColumnsType<Group> = [
     {
       title: "Name",
       dataIndex: "name",
@@ -387,6 +390,8 @@ export default function GroupsPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/groups', rawColumns1);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load groups" />;

@@ -40,6 +40,7 @@ import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CountTooltip from "../components/CountTooltip";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function isLocked(record: UserResponseExt): boolean {
   return !!record.locked_until && new Date(record.locked_until) > new Date();
@@ -183,7 +184,7 @@ export default function UsersPage() {
     navigate(key === "users" ? "/users" : `/users?tab=${key}`, { replace: true });
   };
 
-  const columns: ColumnsType<UserResponseExt> = [
+  const rawColumns0: ColumnsType<UserResponseExt> = [
     {
       title: "Username",
       dataIndex: "username",
@@ -332,6 +333,8 @@ export default function UsersPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/users', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load users" />;

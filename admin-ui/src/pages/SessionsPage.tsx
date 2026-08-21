@@ -40,6 +40,7 @@ import { useTableScrollY } from "../hooks/useTableScrollY";
 import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function formatDate(date: string | null): string {
   if (!date) return "—";
@@ -166,7 +167,7 @@ function SessionsView({
     [defaultPageSize]
   );
 
-  const columns: ColumnsType<OAuthSessionResponse> = [
+  const rawColumns0: ColumnsType<OAuthSessionResponse> = [
     {
       title: "Session ID",
       dataIndex: "id",
@@ -249,6 +250,8 @@ function SessionsView({
       ),
     },
   ];
+  const columns = useHiddenColumns('/sessions', rawColumns0);
+
 
   return (
     <>
@@ -454,7 +457,7 @@ export default function SessionsPage() {
     );
   }
 
-  const columns: ColumnsType<IdpSessionResponse> = [
+  const rawColumns1: ColumnsType<IdpSessionResponse> = [
     {
       title: "Session ID",
       dataIndex: "id",
@@ -569,6 +572,8 @@ export default function SessionsPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/sessions', rawColumns1);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load sessions" />;
