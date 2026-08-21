@@ -308,7 +308,7 @@ export default function TokensPage() {
           rowKey="id"
           loading={isLoading}
           onChange={handleTableChange}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={{
             current:
               Math.floor(
