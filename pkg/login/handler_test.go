@@ -573,3 +573,33 @@ func TestHandleLoginUser_VerifiedUser_Proceeds(t *testing.T) {
 }
 
 func boolPtr(b bool) *bool { return &b }
+
+func TestHandleLoginUser_RequirePasswordChange(t *testing.T) {
+	testutils.WithTestDB(t)
+	testutils.WithConfigOverride(t, func() {
+		config.Bootstrap.AppOAuthPath = "/oauth2"
+	})
+
+	u, _ := user.CreateUser("forcepwuser", "password123", "force@test.com")
+	f := true
+	_ = user.UpdateUser(u.ID, user.UserUpdateRequest{RequirePasswordChange: &f})
+	testutils.InsertTestClient(t, "c1", []string{"http://localhost"})
+
+	form := url.Values{}
+	form.Set("username", "forcepwuser")
+	form.Set("password", "password123")
+	form.Set("client_id", "c1")
+	form.Set("redirect_uri", "http://localhost")
+
+	testutils.SetAuthorizeSig(form)
+	req := httptest.NewRequest(http.MethodPost, "/oauth2/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rr := httptest.NewRecorder()
+	HandleLoginUser(rr, req)
+
+	// Since it renders the force password change form, we expect a 200 OK.
+	assert.Equal(t, http.StatusOK, rr.Code)
+	body := rr.Body.String()
+	assert.Contains(t, body, "force-password-change")
+	assert.Contains(t, body, "An administrator has requested that you change your password")
+}

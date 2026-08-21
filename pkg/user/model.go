@@ -46,6 +46,7 @@ type User struct {
 	AddressRegion     string
 	AddressPostalCode string
 	AddressCountry    string
+	RequirePasswordChange bool
 }
 
 type UserResponse struct {
@@ -78,6 +79,7 @@ type UserResponse struct {
 	AddressRegion     string `json:"address_region,omitempty"`
 	AddressPostalCode string `json:"address_postal_code,omitempty"`
 	AddressCountry    string `json:"address_country,omitempty"`
+	RequirePasswordChange bool `json:"require_password_change"`
 }
 
 // GetID satisfies the audit.Actor interface.
@@ -115,6 +117,7 @@ func (u *User) ToResponse() UserResponse {
 		AddressRegion:       u.AddressRegion,
 		AddressPostalCode:   u.AddressPostalCode,
 		AddressCountry:      u.AddressCountry,
+		RequirePasswordChange: u.RequirePasswordChange,
 	}
 }
 
@@ -190,6 +193,7 @@ type UserUpdateRequest struct {
 	AddressRegion     string `json:"address_region,omitempty"`
 	AddressPostalCode string `json:"address_postal_code,omitempty"`
 	AddressCountry    string `json:"address_country,omitempty"`
+	RequirePasswordChange *bool `json:"require_password_change,omitempty"`
 }
 
 // validateURLScheme checks that a URL string uses http or https scheme.
