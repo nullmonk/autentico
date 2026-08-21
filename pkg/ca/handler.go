@@ -542,7 +542,7 @@ func HandleDownloadUserCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pfxData, err := pkcs12.Encode(rand.Reader, priv, parsedCert, []*x509.Certificate{parsedInter}, bundlePassword)
+	pfxData, err := pkcs12.Modern2023.Encode(priv, parsedCert, []*x509.Certificate{parsedInter}, bundlePassword)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "internal_error", "Failed to create pkcs12 bundle")
 		return
