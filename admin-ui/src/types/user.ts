@@ -31,6 +31,7 @@ export interface UserUpdateRequest {
   address_region?: string;
   address_postal_code?: string;
   address_country?: string;
+  require_password_change?: boolean;
 }
 
 // Extended response fields not in swagger spec
@@ -63,4 +64,5 @@ export interface UserResponseExt {
   address_region?: string;
   address_postal_code?: string;
   address_country?: string;
+  require_password_change: boolean;
 }
