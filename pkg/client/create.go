@@ -47,7 +47,7 @@ func createClientInternal(clientID string, req ClientCreateRequest) (*ClientResp
 	}
 
 	redirectURIs, _ := json.Marshal(req.RedirectURIs)
-	
+
 	postLogoutURIsSlice := req.PostLogoutRedirectURIs
 	if postLogoutURIsSlice == nil {
 		postLogoutURIsSlice = []string{}

@@ -49,7 +49,7 @@ func TestEncodeKeyToBase64(t *testing.T) {
 func TestDecodeBase64PEM(t *testing.T) {
 	pk := GetPrivateKey()
 	encoded := EncodeKeyToBase64(pk)
-	
+
 	decoded := decodeBase64PEM(encoded)
 	assert.NotNil(t, decoded)
 	assert.Equal(t, pk.N, decoded.N)
@@ -68,7 +68,7 @@ func TestInitKeys_InvalidEnvVar(t *testing.T) {
 
 	// Since initKeys uses sync.Once, it might have already run.
 	// But in tests, we can't easily reset it.
-	
+
 	priv := GetPrivateKey()
 	assert.NotNil(t, priv)
 }

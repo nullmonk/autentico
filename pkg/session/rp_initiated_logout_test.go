@@ -261,4 +261,3 @@ func TestHandleRpInitiatedLogout_InvalidIdTokenHint_StillLoggedOut(t *testing.T)
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Contains(t, rr.Body.String(), "signed out")
 }
-

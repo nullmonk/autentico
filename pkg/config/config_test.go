@@ -96,7 +96,7 @@ func TestGetForClient_WithOverrides(t *testing.T) {
 	sso := "30m"
 	trust := true
 	trustExp := "48h"
-	
+
 	cfg := GetForClient(ClientOverrides{
 		AccessTokenExpiration:       &exp,
 		RefreshTokenExpiration:      &rexp,
@@ -107,7 +107,7 @@ func TestGetForClient_WithOverrides(t *testing.T) {
 		TrustDeviceEnabled:          &trust,
 		TrustDeviceExpiration:       &trustExp,
 	})
-	
+
 	assert.Equal(t, time.Hour, cfg.AuthAccessTokenExpiration)
 	assert.Equal(t, 24*time.Hour, cfg.AuthRefreshTokenExpiration)
 	assert.Equal(t, 5*time.Minute, cfg.AuthAuthorizationCodeExpiration)

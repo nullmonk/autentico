@@ -33,7 +33,7 @@ func TestHandleMfa_NotFound(t *testing.T) {
 func TestHandleMfa_GetEnroll(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -154,7 +154,7 @@ func TestHandleMfa_Post_WrongCode(t *testing.T) {
 func TestHandleMfa_ExpiredChallenge(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "expired",
 		UserID:     u.ID,
@@ -175,7 +175,7 @@ func TestHandleMfa_ExpiredChallenge(t *testing.T) {
 func TestHandleMfa_UsedChallenge(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "used",
 		UserID:     u.ID,
@@ -209,7 +209,7 @@ func TestHandleMfa_GetVerify(t *testing.T) {
 	_ = user.UpdateUser(u.ID, user.UserUpdateRequest{
 		TotpVerified: boolPtr(true),
 	})
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -231,7 +231,7 @@ func TestHandleMfa_GetVerify(t *testing.T) {
 func TestHandleMfa_Post_EmailSuccess(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -309,7 +309,7 @@ func TestHandleMfa_Post_TrustDevice(t *testing.T) {
 func TestHandleMfa_Post_UnknownMethod(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -342,7 +342,7 @@ func TestHandleMfa_MethodNotAllowed(t *testing.T) {
 func TestHandleMfa_GetEmail(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -368,7 +368,7 @@ func TestHandleMfa_GetEmail(t *testing.T) {
 func TestHandleMfa_Get_UnknownMethod(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("mfauser", "pass", "mfa@example.com")
-	
+
 	c := MfaChallenge{
 		ID:         "chall1",
 		UserID:     u.ID,
@@ -388,7 +388,7 @@ func TestHandleMfa_Get_UnknownMethod(t *testing.T) {
 
 func TestHandleMfa_Post_ChallengeNotFound(t *testing.T) {
 	testutils.WithTestDB(t)
-	
+
 	req := httptest.NewRequest(http.MethodPost, "/oauth2/mfa", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	// Use dummy form with nonexistent challenge

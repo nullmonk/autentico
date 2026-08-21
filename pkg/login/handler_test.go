@@ -271,7 +271,7 @@ func TestHandleLoginUser_SkipMfaIfTrusted(t *testing.T) {
 	testutils.WithTestDB(t)
 	u, _ := user.CreateUser("testuser", "password123", "test@test.com")
 	testutils.InsertTestClient(t, "c1", []string{"http://localhost"})
-	
+
 	// Enable MFA
 	testutils.WithConfigOverride(t, func() {
 		config.Values.RequireMfa = true
@@ -299,7 +299,7 @@ func TestHandleLoginUser_SkipMfaIfTrusted(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	// Add trusted device cookie
 	req.AddCookie(&http.Cookie{Name: trusteddevice.CookieName, Value: deviceID})
-	
+
 	rr := httptest.NewRecorder()
 	HandleLoginUser(rr, req)
 
@@ -313,7 +313,7 @@ func TestHandleLoginUser_MfaMethodBoth_TotpVerified(t *testing.T) {
 	u, _ := user.CreateUser("mfauser", "password123", "mfa@test.com")
 	_ = user.UpdateUser(u.ID, user.UserUpdateRequest{TotpVerified: boolPtr(true)})
 	testutils.InsertTestClient(t, "c1", []string{"http://localhost"})
-	
+
 	testutils.WithConfigOverride(t, func() {
 		config.Values.RequireMfa = true
 		config.Values.MfaMethod = "both"
@@ -340,7 +340,7 @@ func TestHandleLoginUser_MfaMethodBoth_NoTotpVerified(t *testing.T) {
 	testutils.WithTestDB(t)
 	_, _ = user.CreateUser("mfauser", "password123", "mfa@test.com")
 	testutils.InsertTestClient(t, "c1", []string{"http://localhost"})
-	
+
 	testutils.WithConfigOverride(t, func() {
 		config.Values.RequireMfa = true
 		config.Values.MfaMethod = "both"
@@ -371,7 +371,7 @@ func TestRedirectToLogin_Extra(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/?anything=1", nil)
 	rr := httptest.NewRecorder()
-	
+
 	loginReq := LoginRequest{
 		ClientID:            "c1",
 		RedirectURI:         "http://cb",
@@ -381,9 +381,9 @@ func TestRedirectToLogin_Extra(t *testing.T) {
 		CodeChallenge:       "cc1",
 		CodeChallengeMethod: "S256",
 	}
-	
+
 	redirectToLogin(rr, req, loginReq, "some error")
-	
+
 	assert.Equal(t, http.StatusFound, rr.Code)
 	loc := rr.Header().Get("Location")
 	assert.Contains(t, loc, "/oauth2/authorize")
@@ -426,7 +426,7 @@ func TestHandleLoginUser_MfaEnrollment(t *testing.T) {
 	testutils.WithTestDB(t)
 	_, _ = user.CreateUser("enrolluser", "password123", "e@test.com")
 	testutils.InsertTestClient(t, "c1", []string{"http://localhost"})
-	
+
 	testutils.WithConfigOverride(t, func() {
 		config.Values.RequireMfa = true
 		config.Values.MfaMethod = "totp"
@@ -453,7 +453,7 @@ func TestHandleLoginUser_MfaEmailEnrollment(t *testing.T) {
 	testutils.WithTestDB(t)
 	_, _ = user.CreateUser("enrolluser", "password123", "e@test.com")
 	testutils.InsertTestClient(t, "c1", []string{"http://localhost"})
-	
+
 	testutils.WithConfigOverride(t, func() {
 		config.Values.RequireMfa = true
 		config.Values.MfaMethod = "email"

@@ -11,7 +11,7 @@ import (
 func TestMarkChallengeUsed(t *testing.T) {
 	testutils.WithTestDB(t)
 	testutils.InsertTestUser(t, "u1")
-	
+
 	c := MfaChallenge{
 		ID:         "c1",
 		UserID:     "u1",
@@ -32,7 +32,7 @@ func TestMarkChallengeUsed(t *testing.T) {
 func TestUpdateChallengeCode(t *testing.T) {
 	testutils.WithTestDB(t)
 	testutils.InsertTestUser(t, "u1")
-	
+
 	c := MfaChallenge{
 		ID:         "c1",
 		UserID:     "u1",

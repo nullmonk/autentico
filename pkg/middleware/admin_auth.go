@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gobwas/glob"
+
 	"github.com/eugenioenko/autentico/pkg/config"
 	"github.com/eugenioenko/autentico/pkg/db"
 	"github.com/eugenioenko/autentico/pkg/jwtutil"
@@ -65,7 +67,7 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 			// Verify requested path against scopes
 			matched := false
 			for _, route := range claims.Routes {
-				if route == "*" {
+				if route == "*" || route == "*:*" {
 					matched = true
 					break
 				}
@@ -75,7 +77,16 @@ func AdminAuthMiddleware(next http.Handler) http.Handler {
 					routeMethod := parts[1]
 
 					methodMatches := routeMethod == "*" || r.Method == routeMethod
-					pathMatches := routePath == "*" || strings.HasPrefix(r.URL.Path, routePath)
+
+					pathMatches := false
+					if routePath == "*" {
+						pathMatches = true
+					} else {
+						g, err := glob.Compile(routePath)
+						if err == nil && g.Match(r.URL.Path) {
+							pathMatches = true
+						}
+					}
 
 					if methodMatches && pathMatches {
 						matched = true

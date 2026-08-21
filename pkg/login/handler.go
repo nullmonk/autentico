@@ -326,4 +326,3 @@ func redirectToLogin(w http.ResponseWriter, r *http.Request, req LoginRequest, l
 	redirectURL := config.GetBootstrap().AppOAuthPath + "/authorize?" + params.Encode()
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
-
