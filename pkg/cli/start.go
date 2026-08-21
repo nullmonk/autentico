@@ -33,6 +33,7 @@ import (
 	"github.com/eugenioenko/autentico/pkg/devicecode"
 	"github.com/eugenioenko/autentico/pkg/emailverification"
 	"github.com/eugenioenko/autentico/pkg/federation"
+	"github.com/eugenioenko/autentico/pkg/forcepasswordchange"
 	"github.com/eugenioenko/autentico/pkg/group"
 	"github.com/eugenioenko/autentico/pkg/health"
 	"github.com/eugenioenko/autentico/pkg/idpsession"
@@ -158,6 +159,7 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("POST "+oauth+"/magic-link/verify", rateLimited(csrfProtected(magiclink.HandleMagicLinkVerifyCode)))
 	mux.Handle(oauth+"/forgot-password", rateLimited(csrfProtected(passwordreset.HandleForgotPassword)))
 	mux.Handle(oauth+"/reset-password", rateLimited(csrfProtected(passwordreset.HandleResetPassword)))
+	mux.Handle(oauth+"/force-password-change", rateLimited(csrfProtected(forcepasswordchange.HandleForcePasswordChange)))
 	mux.HandleFunc("GET "+oauth+"/federation/{id}", federation.HandleFederationBegin)
 	mux.HandleFunc("GET "+oauth+"/federation/{id}/callback", federation.HandleFederationCallback)
 	mux.Handle(oauth+"/signup", csrfProtected(signup.HandleSignup))

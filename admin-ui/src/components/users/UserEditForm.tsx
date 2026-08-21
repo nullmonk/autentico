@@ -60,6 +60,7 @@ export default function UserEditForm({
         address_region: user.address_region,
         address_postal_code: user.address_postal_code,
         address_country: user.address_country,
+        require_password_change: user.require_password_change,
       });
     }
   }, [user, open, form]);
@@ -227,6 +228,15 @@ export default function UserEditForm({
           label="MFA Enrolled"
           valuePropName="checked"
           extra="Turning this off will reset the user's MFA setup."
+        >
+          <Switch />
+        </Form.Item>
+
+        <Form.Item
+          name="require_password_change"
+          label="Require Password Change"
+          valuePropName="checked"
+          extra="Force the user to change their password on next login."
         >
           <Switch />
         </Form.Item>

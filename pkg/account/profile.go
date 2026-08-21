@@ -211,7 +211,8 @@ func HandleUpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := user.UpdateUser(usr.ID, user.UserUpdateRequest{Password: req.NewPassword}); err != nil {
+	f := false
+	if err := user.UpdateUser(usr.ID, user.UserUpdateRequest{Password: req.NewPassword, RequirePasswordChange: &f}); err != nil {
 		slog.Error("account: failed to update password", "error", err, "user_id", usr.ID)
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to update password")
 		return
