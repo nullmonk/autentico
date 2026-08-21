@@ -16,6 +16,9 @@ import {
   Table,
   Tag,
   App,
+  Modal,
+  Row,
+  Col,
 } from "antd";
 import {
   SaveOutlined,
@@ -34,6 +37,88 @@ import RetentionInput from "../components/RetentionInput";
 import { makeTip } from "../lib/tips";
 
 const { Title, Text } = Typography;
+
+const USER_COLUMNS = [
+  { label: "Username", value: "username" },
+  { label: "Email", value: "email" },
+  { label: "Role", value: "role" },
+  { label: "MFA", value: "totp_verified" },
+  { label: "Verified", value: "is_email_verified" },
+  { label: "Status", value: "status" },
+  { label: "Groups", value: "groups" },
+  { label: "Created", value: "created_at" },
+];
+
+const GROUP_COLUMNS = [
+  { label: "Name", value: "name" },
+  { label: "Description", value: "description" },
+  { label: "Members", value: "members" },
+  { label: "Created", value: "created_at" },
+];
+
+const SESSION_COLUMNS = [
+  { label: "Username", value: "username" },
+  { label: "IP Address", value: "ip_address" },
+  { label: "Device", value: "device" },
+  { label: "Provider", value: "provider" },
+  { label: "Created At", value: "created_at" },
+  { label: "Expires At", value: "expires_at" },
+];
+
+const TOKEN_COLUMNS = [
+  { label: "Type", value: "type" },
+  { label: "Client ID", value: "client_id" },
+  { label: "Subject", value: "subject" },
+  { label: "Scopes", value: "scopes" },
+  { label: "Created At", value: "created_at" },
+  { label: "Expires At", value: "expires_at" },
+];
+
+const API_TOKEN_COLUMNS = [
+  { label: "Name", value: "name" },
+  { label: "Scopes", value: "scopes" },
+  { label: "Created At", value: "created_at" },
+  { label: "Expires At", value: "expires_at" },
+  { label: "Last Used At", value: "last_used_at" },
+];
+
+const CLIENT_COLUMNS = [
+  { label: "Client ID", value: "client_id" },
+  { label: "Name", value: "name" },
+  { label: "Type", value: "type" },
+  { label: "Method", value: "token_endpoint_auth_method" },
+  { label: "Status", value: "status" },
+];
+
+const FEDERATION_COLUMNS = [
+  { label: "Name", value: "name" },
+  { label: "Type", value: "type" },
+  { label: "Status", value: "status" },
+];
+
+const AUDIT_LOG_COLUMNS = [
+  { label: "Timestamp", value: "created_at" },
+  { label: "Event", value: "event" },
+  { label: "Actor", value: "actor" },
+  { label: "IP Address", value: "ip_address" },
+  { label: "Status", value: "status" },
+];
+
+const CLIENT_CERTIFICATES_COLUMNS = [
+  { label: "Serial Number", value: "serial_number" },
+  { label: "Common Name", value: "common_name" },
+  { label: "Valid From", value: "not_before" },
+  { label: "Valid Until", value: "not_after" },
+  { label: "Status", value: "status" },
+];
+
+const SERVER_CERTIFICATES_COLUMNS = [
+  { label: "Serial Number", value: "serial_number" },
+  { label: "Common Name", value: "common_name" },
+  { label: "Valid From", value: "not_before" },
+  { label: "Valid Until", value: "not_after" },
+  { label: "Status", value: "status" },
+];
 
 const boolProp = (value: unknown) => ({ checked: value === true || value === "true" });
 
@@ -123,6 +208,184 @@ const tip = makeTip({
 interface FooterLink {
   label: string;
   url: string;
+}
+
+const COLUMNS_BY_PAGE: Record<string, { label: string; value: string }[]> = {
+  "/users": USER_COLUMNS,
+  "/groups": GROUP_COLUMNS,
+  "/sessions": SESSION_COLUMNS,
+  "/tokens": TOKEN_COLUMNS,
+  "/api-tokens": API_TOKEN_COLUMNS,
+  "/clients": CLIENT_COLUMNS,
+  "/federation": FEDERATION_COLUMNS,
+  "/audit-log": AUDIT_LOG_COLUMNS,
+  "/ca-clients": CLIENT_CERTIFICATES_COLUMNS,
+  "/ca-servers": SERVER_CERTIFICATES_COLUMNS,
+};
+
+function HiddenColumnsEditor({ value, onChange }: { value?: string; onChange?: (v: string) => void }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<string>("/users");
+
+  const hiddenColumns: Record<string, string[]> = (() => {
+    try { return JSON.parse(value || "{}"); } catch { return {}; }
+  })();
+
+  const update = (next: Record<string, string[]>) => onChange?.(JSON.stringify(next, null, 2));
+
+  const handleCheckboxChange = (page: string, column: string, checked: boolean) => {
+    const next = { ...hiddenColumns };
+    if (!next[page]) next[page] = [];
+
+    if (checked) {
+      if (!next[page].includes(column)) {
+        next[page].push(column);
+      }
+    } else {
+      next[page] = next[page].filter(c => c !== column);
+      if (next[page].length === 0) {
+        delete next[page];
+      }
+    }
+    update(next);
+  };
+
+  const handleSelectAll = (page: string, columns: {value: string}[]) => {
+    const next = { ...hiddenColumns };
+    // Only add predefined columns without touching the custom ones
+    const existing = next[page] || [];
+    const custom = existing.filter(c => !columns.find(col => col.value === c));
+    next[page] = [...new Set([...columns.map(c => c.value), ...custom])];
+    update(next);
+  };
+
+  const handleClearAllPredefined = (page: string, columns: {value: string}[]) => {
+    const next = { ...hiddenColumns };
+    if (next[page]) {
+      next[page] = next[page].filter(c => !columns.find(col => col.value === c));
+      if (next[page].length === 0) delete next[page];
+    }
+    update(next);
+  };
+
+  const handleCustomChange = (page: string, values: string[]) => {
+    const next = { ...hiddenColumns };
+    const predefined = selectedPageColumns.map(c => c.value);
+    const existingPredefined = (next[page] || []).filter(c => predefined.includes(c));
+
+    const newValues = [...existingPredefined, ...values];
+    if (newValues.length > 0) {
+        next[page] = newValues;
+    } else {
+        delete next[page];
+    }
+    update(next);
+  };
+
+  const selectedPageColumns = COLUMNS_BY_PAGE[selectedPage] || [];
+  const selectedPageHidden = hiddenColumns[selectedPage] || [];
+  const customHidden = selectedPageHidden.filter(h => !selectedPageColumns.find(c => c.value === h));
+
+  return (
+    <>
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Input.TextArea
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          rows={6}
+          placeholder='{
+  "/users": ["email", "created_at"]
+}'
+          style={{ fontFamily: "monospace" }}
+        />
+        <Button onClick={() => setIsModalOpen(true)}>Advanced UI Editor</Button>
+      </Space>
+
+      <Modal
+        title="Edit Hidden Columns"
+        open={isModalOpen}
+        onOk={() => setIsModalOpen(false)}
+        onCancel={() => setIsModalOpen(false)}
+        width={600}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setIsModalOpen(false)}>
+            Close
+          </Button>
+        ]}
+      >
+        <Space direction="vertical" style={{ width: "100%", marginTop: 16 }}>
+          <Select
+            style={{ width: "100%" }}
+            value={selectedPage}
+            onChange={setSelectedPage}
+            options={[
+              { label: "Users", value: "/users" },
+              { label: "Groups", value: "/groups" },
+              { label: "Sessions", value: "/sessions" },
+              { label: "Tokens", value: "/tokens" },
+              { label: "API Tokens", value: "/api-tokens" },
+              { label: "Clients", value: "/clients" },
+              { label: "Federation", value: "/federation" },
+              { label: "Audit Log", value: "/audit-log" },
+              { label: "Client Certificates", value: "/ca-clients" },
+              { label: "Server Certificates", value: "/ca-servers" },
+            ]}
+          />
+
+          {selectedPageColumns.length > 0 ? (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text strong>Columns to hide on {selectedPage}</Text>
+                <Space>
+                  <Button size="small" onClick={() => handleSelectAll(selectedPage, selectedPageColumns)}>Select All</Button>
+                  <Button size="small" onClick={() => handleClearAllPredefined(selectedPage, selectedPageColumns)}>Clear All</Button>
+                </Space>
+              </div>
+              <Row gutter={[16, 16]}>
+                {selectedPageColumns.map(col => (
+                  <Col span={12} key={col.value}>
+                    <Checkbox
+                      checked={selectedPageHidden.includes(col.value)}
+                      onChange={(e) => handleCheckboxChange(selectedPage, col.value, e.target.checked)}
+                    >
+                      {col.label} ({col.value})
+                    </Checkbox>
+                  </Col>
+                ))}
+              </Row>
+
+              <div style={{ marginTop: 24 }}>
+                <Text strong>Other Columns (Custom Match)</Text>
+                <div style={{ marginTop: 8 }}>
+                  <Select
+                    mode="tags"
+                    style={{ width: '100%' }}
+                    placeholder="Type a column ID or Title to hide and press Enter"
+                    value={customHidden}
+                    onChange={(values) => handleCustomChange(selectedPage, values)}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 16 }}>
+              <Alert message="No known columns configured for this page. You can still add custom matches." type="info" showIcon style={{ marginBottom: 16 }} />
+              <Text strong>Other Columns (Custom Match)</Text>
+              <div style={{ marginTop: 8 }}>
+                <Select
+                  mode="tags"
+                  style={{ width: '100%' }}
+                  placeholder="Type a column ID or Title to hide and press Enter"
+                  value={customHidden}
+                  onChange={(values) => handleCustomChange(selectedPage, values)}
+                />
+              </div>
+            </div>
+          )}
+        </Space>
+      </Modal>
+    </>
+  );
 }
 
 function FooterLinksEditor({ value, onChange }: { value?: string; onChange?: (v: string) => void }) {
@@ -1089,11 +1352,7 @@ export default function SettingsPage() {
                     name="admin_ui_hidden_columns"
                     tooltip={{ title: "JSON object mapping page paths to arrays of column keys to hide.", icon: <ExclamationCircleOutlined /> }}
                   >
-                    <Input.TextArea
-                      rows={6}
-                      placeholder='{&#10;  "/users": ["email", "created_at"]&#10;}'
-                      style={{ fontFamily: "monospace" }}
-                    />
+                    <HiddenColumnsEditor />
                   </Form.Item>
                   <Form.Item
                     label="Default Page Size"

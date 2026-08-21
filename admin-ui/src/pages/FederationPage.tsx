@@ -26,6 +26,7 @@ import { useTableScrollY } from "../hooks/useTableScrollY";
 import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 export default function FederationPage() {
   const { message } = App.useApp();
@@ -101,7 +102,7 @@ export default function FederationPage() {
         : ("ascend" as const)
       : undefined;
 
-  const columns: ColumnsType<FederationProvider> = [
+  const rawColumns0: ColumnsType<FederationProvider> = [
     {
       title: "Name",
       dataIndex: "name",
@@ -186,6 +187,8 @@ export default function FederationPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/federation', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load federation providers" />;
