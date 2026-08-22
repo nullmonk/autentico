@@ -1,0 +1,111 @@
+---
+title: Per-Client Overrides
+description: How to configure token TTLs, audiences, and authentication behavior individually per OAuth2 client.
+---
+
+
+
+Each registered OAuth2 client can override a subset of the global runtime settings. Overrides are stored in the `clients` table and applied per-request based on the `client_id` in the authorization request.
+
+Unset overrides (null) fall through to the current global runtime settings. There is no need to repeat the global default — only set what differs.
+
+## Setting overrides
+
+**Via Admin UI**: Clients → select a client → Edit → expand the Configuration Overrides section.
+
+**Via API** at registration:
+
+```bash
+curl -X POST https://auth.example.com/oauth2/register \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_name": "Mobile App",
+    "client_type": "public",
+    "redirect_uris": ["myapp://callback"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "access_token_expiration": "30m",
+    "refresh_token_expiration": "168h",
+    "trust_device_enabled": true,
+    "trust_device_expiration": "720h"
+  }'
+```
+
+**Via API** on an existing client:
+
+```bash
+curl -X PUT https://auth.example.com/oauth2/register/YOUR_CLIENT_ID \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "access_token_expiration": "1h",
+    "allowed_audiences": ["https://api.example.com", "https://other-api.example.com"]
+  }'
+```
+
+:::tip
+Duration strings use Go's `time.Duration` format: `"15m"`, `"1h"`, `"720h"`, `"30s"`. A value of `"0"` means no idle expiration (e.g. `sso_session_idle_timeout: "0"` means sessions for that client never expire from inactivity).
+
+:::
+
+---
+
+## Available overrides
+
+### `access_token_expiration`
+
+Access token lifetime for tokens issued to this client. Overrides the global [`access_token_expiration`](/configuration/runtime-settings/#access_token_expiration). Example: `"30m"`.
+
+### `refresh_token_expiration`
+
+Refresh token lifetime for this client. Overrides the global [`refresh_token_expiration`](/configuration/runtime-settings/#refresh_token_expiration). Example: `"168h"` (7 days).
+
+### `authorization_code_expiration`
+
+Authorization code TTL for this client. Overrides the global [`authorization_code_expiration`](/configuration/runtime-settings/#authorization_code_expiration).
+
+### `allowed_audiences`
+
+String array of additional `aud` values added to access tokens for this client. Example: `["https://api.example.com"]`. When set, extends the global `access_token_audience` setting. To grant a client access to the admin API, include `"autentico-admin"` in this array.
+
+### `allow_self_signup`
+
+Override the global [`allow_self_signup`](/configuration/runtime-settings/#allow_self_signup) setting for this client's login page.
+
+### `sso_session_idle_timeout`
+
+Override the IdP session idle timeout for sessions originating from this client. Overrides the global [`sso_session_idle_timeout`](/configuration/runtime-settings/#sso_session_idle_timeout).
+
+### `trust_device_enabled`
+
+Enable or disable trusted devices for users authenticating through this client. Overrides the global [`trust_device_enabled`](/configuration/runtime-settings/#trust_device_enabled).
+
+### `trust_device_expiration`
+
+Override trusted device token lifetime for this client. Overrides the global [`trust_device_expiration`](/configuration/runtime-settings/#trust_device_expiration).
+
+### `consent_required`
+
+When enabled (`true`), users authenticating through this client must explicitly approve the requested OAuth2 scopes on a consent screen before the authorization code is issued. Consent decisions are remembered per user + client + scope combination — subsequent logins skip the consent screen unless the requested scopes change.
+
+---
+
+## Precedence example
+
+Given this global configuration:
+
+```
+access_token_expiration = 15m
+trust_device_enabled = false
+```
+
+And a client configured with:
+
+```json
+{
+  "access_token_expiration": "1h",
+  "trust_device_enabled": true
+}
+```
+
+Requests from that client will produce access tokens valid for 1 hour, with trusted device support enabled, while all other clients continue to use the 15-minute default with trusted devices disabled.

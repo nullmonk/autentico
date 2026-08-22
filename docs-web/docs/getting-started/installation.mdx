@@ -1,0 +1,119 @@
+---
+title: Installation
+description: How to install Autentico — binary download, Docker image, or build from source.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Autentico ships as a single self-contained binary with no runtime dependencies.
+
+## Binary
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/eugenioenko/autentico/releases/latest).
+
+<Tabs>
+<TabItem value="Linux (amd64)" label="Linux (amd64)">
+```bash
+curl -L https://github.com/eugenioenko/autentico/releases/latest/download/autentico-linux-amd64 -o autentico
+chmod +x autentico
+```
+</TabItem>
+<TabItem value="Linux (arm64)" label="Linux (arm64)">
+```bash
+curl -L https://github.com/eugenioenko/autentico/releases/latest/download/autentico-linux-arm64 -o autentico
+chmod +x autentico
+```
+</TabItem>
+<TabItem value="macOS (amd64)" label="macOS (amd64)">
+```bash
+curl -L https://github.com/eugenioenko/autentico/releases/latest/download/autentico-darwin-amd64 -o autentico
+chmod +x autentico
+```
+</TabItem>
+<TabItem value="macOS (arm64)" label="macOS (arm64)">
+```bash
+curl -L https://github.com/eugenioenko/autentico/releases/latest/download/autentico-darwin-arm64 -o autentico
+chmod +x autentico
+```
+</TabItem>
+<TabItem value="Windows" label="Windows">
+```powershell
+Invoke-WebRequest -Uri https://github.com/eugenioenko/autentico/releases/latest/download/autentico-windows-amd64.exe -OutFile autentico.exe
+```
+</TabItem>
+</Tabs>
+
+Optionally move it to your `$PATH`:
+
+```bash
+sudo mv autentico /usr/local/bin/
+```
+
+### Generate configuration
+
+Before starting for the first time, generate a `.env` file with fresh cryptographic secrets:
+
+```bash
+autentico init --url http://localhost:9999
+```
+
+This creates RSA signing keys, CSRF secrets, and token signing secrets. For production use `--url https://auth.example.com`. For local HTTP development add `--dev` to disable secure cookie flags.
+
+### Start
+
+```bash
+autentico start
+```
+
+## Docker
+
+```bash
+docker run -p 9999:9999 -v autentico-data:/app/data \
+  ghcr.io/eugenioenko/autentico:latest start --auto-setup
+```
+
+The `--auto-setup` flag generates a `.env` with fresh secrets on first run and reuses it on restarts. The volume at `/app/data` persists both the database and the generated configuration.
+
+For a custom URL, pass it via environment variable:
+
+```bash
+docker run -p 9999:9999 -v autentico-data:/app/data \
+  -e AUTENTICO_APP_URL=https://auth.example.com \
+  ghcr.io/eugenioenko/autentico:latest start --auto-setup
+```
+
+See [Docker Compose](/deployment/docker-compose/) for production setups with reverse proxy and SMTP.
+
+
+Changing `AUTENTICO_APP_URL` after first run leaves the admin client registered with the old callback URL. To fix, delete the volume and start fresh: `docker stop autentico && docker rm autentico && docker volume rm autentico-data`.
+
+
+## Build from source
+
+Requires Go 1.22+ and Node.js 22+.
+
+```bash
+git clone https://github.com/eugenioenko/autentico.git
+cd autentico
+make build
+```
+
+The compiled binary is at `./autentico`.
+
+## CLI reference
+
+| Command | Description |
+|---|---|
+| `autentico init` | Generate a `.env` with fresh secrets. Use `--url` to set the app URL, `--dev` for local HTTP. |
+| `autentico start` | Start the server. Applies pending migrations automatically. |
+| `autentico start --auto-setup` | Generate `.env` if missing, then start. Safe to pass on every run. |
+| `autentico start --no-auto-migrate` | Skip automatic migrations. Server refuses to start if the schema is behind. |
+| `autentico migrate` | Interactively apply pending database migrations. |
+| `autentico onboard` | Create the first admin account headlessly (for CI/CD). |
+| `autentico onboard --enable-admin-password-grant` | Also seed the `autentico-admin` client with the `password` (ROPC) grant so admin-API tokens can be fetched headlessly. Also settable via `AUTENTICO_ENABLE_ADMIN_PASSWORD_GRANT=true`. For browser-onboarded deployments, enable the same grant afterwards from the Admin UI (Clients → `autentico-admin`). |
+| `autentico version` | Print version and exit. |
+
+## Next steps
+
+Head to the [Quickstart](/getting-started/quickstart/) to complete onboarding and start using Autentico.

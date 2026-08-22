@@ -1,0 +1,63 @@
+---
+title: SSO Sessions
+description: How Autentico maintains SSO sessions so users don't have to log in for every authorization request.
+---
+
+
+
+Autentico maintains SSO sessions so that once a user authenticates, subsequent authorization requests from any registered client are served without re-prompting for credentials — standard single sign-on behavior.
+
+## How SSO sessions work
+
+When a user logs in successfully, Autentico creates a session record and stores a session cookie in the browser. The cookie is scoped to the Autentico domain.
+
+On a new authorization request:
+
+1. Autentico reads the session cookie
+2. Looks up the session record in the database
+3. Checks whether the session is still active and within the idle timeout window
+4. If valid: issues an authorization code without showing the login page
+5. If expired or missing: presents the login page
+
+## Session lifetime and idle timeout
+
+| Setting | Default | Description |
+|---|---|---|
+| `sso_enabled` | `true` | Enable SSO auto-login. When disabled, users must log in on every request. Device sessions are still tracked |
+| `sso_session_idle_timeout` | `4h` | If the user has no activity for this long, the session expires. `0` for no idle expiration |
+| `sso_session_max_age` | `720h` | Absolute maximum session lifetime regardless of activity. `0` for no limit |
+
+Uses Go duration format for timeouts: `24h`, `168h`, `720h`, etc.
+
+The session cookie's `Expires` attribute is set to `sso_session_max_age` at login time. Changing this setting does not retroactively update existing cookies — increasing the value will not extend sessions already issued, and decreasing it relies on the server-side check to reject sessions that outlive the new limit.
+
+The idle timeout can be overridden per-client, so different clients can have stricter session requirements. See [Per-Client Overrides](/configuration/per-client-overrides/).
+
+## Session storage
+
+Sessions are stored in the `idp_sessions` table with the following fields:
+
+| Field | Description |
+|---|---|
+| `id` | Opaque session ID, stored in the browser cookie |
+| `user_id` | The authenticated user |
+| `user_agent` | Browser user-agent string |
+| `ip_address` | Client IP at login time |
+| `last_activity_at` | Updated on each authorization request (used for idle timeout) |
+| `created_at` | Session creation time |
+| `deactivated_at` | Set when the session is explicitly logged out |
+
+Session expiry is not stored as a column. Instead, it is computed at validation time from `created_at + sso_session_max_age`. This means changes to `sso_session_max_age` apply retroactively to all existing sessions.
+
+## Logout
+
+The `GET /oauth2/logout` endpoint is scoped to the **current End-User session at this OP** per [OpenID Connect RP-Initiated Logout 1.0 §2](https://openid.net/specs/openid-connect-rpinitiated-1_0.html). It reads the IdP session cookie, cascade-revokes that IdP session plus every OAuth session born from it (and their access/refresh tokens), clears the cookie, and redirects the user. Other devices the same subject is signed in on keep their sessions — matching Keycloak, Auth0, and Google behavior.
+
+A dedicated "Sign out everywhere" action is separate from RP-Initiated Logout.
+
+See [Admin UI > Sessions](/admin-ui/sessions/) for managing SSO sessions.
+
+:::tip
+If a user's session is still active when they visit `/oauth2/authorize`, they are logged in silently. This is what makes SSO work across multiple applications registered with the same Autentico instance.
+
+:::
