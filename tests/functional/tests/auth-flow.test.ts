@@ -41,7 +41,7 @@ describe('Authorization Code Flow', () => {
     const authorizeSig = sigMatch ? sigMatch[1] : '';
 
     const cookies = authorizeResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
     expect(csrfCookie).toBeTruthy();
 
     // Step 2: POST /login — submit credentials
@@ -55,7 +55,7 @@ describe('Authorization Code Flow', () => {
       body: new URLSearchParams({
         username: ADMIN_USERNAME,
         password: ADMIN_PASSWORD,
-        'gorilla.csrf.Token': csrfToken,
+        'csrf_token': csrfToken,
         authorize_sig: authorizeSig,
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,
@@ -142,7 +142,7 @@ describe('Authorization Code Flow', () => {
     expect(csrfMatch).toBeTruthy();
 
     const cookies = authorizeResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
     expect(csrfCookie).toBeTruthy();
 
     // POST login WITHOUT authorize_sig — should be rejected
@@ -156,7 +156,7 @@ describe('Authorization Code Flow', () => {
       body: new URLSearchParams({
         username: ADMIN_USERNAME,
         password: ADMIN_PASSWORD,
-        'gorilla.csrf.Token': csrfMatch![1],
+        'csrf_token': csrfMatch![1],
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,
         scope: 'openid',
@@ -192,7 +192,7 @@ describe('Authorization Code Flow', () => {
     expect(sigMatch).toBeTruthy();
 
     const cookies = authorizeResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
 
     // POST login with escalated scope — sig was computed for "openid" only
     const loginResp = await fetch(`${OAUTH_URL}/login`, {
@@ -205,7 +205,7 @@ describe('Authorization Code Flow', () => {
       body: new URLSearchParams({
         username: ADMIN_USERNAME,
         password: ADMIN_PASSWORD,
-        'gorilla.csrf.Token': csrfMatch![1],
+        'csrf_token': csrfMatch![1],
         authorize_sig: sigMatch![1],
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,
@@ -240,7 +240,7 @@ describe('Authorization Code Flow', () => {
     const sigMatch = html.match(/name="authorize_sig"\s+value="([^"]*)"/);
 
     const cookies = authorizeResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
 
     // POST login with PKCE stripped — sig was computed with PKCE present
     const loginResp = await fetch(`${OAUTH_URL}/login`, {
@@ -253,7 +253,7 @@ describe('Authorization Code Flow', () => {
       body: new URLSearchParams({
         username: ADMIN_USERNAME,
         password: ADMIN_PASSWORD,
-        'gorilla.csrf.Token': csrfMatch![1],
+        'csrf_token': csrfMatch![1],
         authorize_sig: sigMatch![1],
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,

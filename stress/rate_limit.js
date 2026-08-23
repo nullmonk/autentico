@@ -37,7 +37,7 @@ export default function () {
   // Hit the login endpoint directly with a dummy payload
   const resp = http.post(
     `${BASE_URL}${OAUTH_PATH}/login`,
-    { username: 'nobody', password: 'wrong', 'gorilla.csrf.Token': 'x' },
+    { username: 'nobody', password: 'wrong', 'csrf_token': 'x' },
     { redirects: 0 }
   );
 

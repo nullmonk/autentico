@@ -43,7 +43,7 @@ func csrfTokenFromAuthorize(t *testing.T, ts *TestServer) string {
 // postLogin sends a POST to /oauth2/login with the given form values and CSRF token.
 func postLogin(t *testing.T, ts *TestServer, form url.Values, csrfToken string) *http.Response {
 	t.Helper()
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	req, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

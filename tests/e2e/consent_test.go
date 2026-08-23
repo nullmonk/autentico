@@ -31,7 +31,7 @@ func postConsentForm(t *testing.T, ts *TestServer, htmlBody, action string) *htt
 	form.Set("code_challenge_method", getHiddenField(htmlBody, "code_challenge_method"))
 	form.Set("prompt", getHiddenField(htmlBody, "prompt"))
 	form.Set("consent_sig", consentSig)
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 
 	req, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/consent", strings.NewReader(form.Encode()))
 	require.NoError(t, err)
@@ -104,7 +104,7 @@ func performAuthFlowUntilConsent(t *testing.T, ts *TestServer, clientID, redirec
 	form.Set("scope", getHiddenField(htmlBody, "scope"))
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -272,7 +272,7 @@ func TestConsentFlow_ConsentSignatureTampering_Rejected(t *testing.T) {
 	form.Set("code_challenge", getHiddenField(htmlBody, "code_challenge"))
 	form.Set("code_challenge_method", getHiddenField(htmlBody, "code_challenge_method"))
 	form.Set("consent_sig", "tampered-signature-value")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 
 	allowReq, _ := http.NewRequest("POST", ts.BaseURL+"/oauth2/consent", strings.NewReader(form.Encode()))
 	allowReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")

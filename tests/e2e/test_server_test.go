@@ -114,6 +114,8 @@ func startTestServer(t *testing.T) *TestServer {
 		[]byte(config.GetBootstrap().AuthCSRFProtectionSecretKey),
 		csrf.Secure(false),
 		csrf.Path("/"),
+		csrf.CookieName("csrf_token"),
+		csrf.FieldName("csrf_token"),
 	)
 	plaintextCSRF := func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -241,7 +243,7 @@ func newClientWithJar() *http.Client {
 
 // getCSRFToken extracts the CSRF token value from the rendered login HTML body.
 func getCSRFToken(body string) string {
-	re := regexp.MustCompile(`<input type="hidden" name="gorilla\.csrf\.Token" value="([^"]+)"`)
+	re := regexp.MustCompile(`<input type="hidden" name="csrf_token" value="([^"]+)"`)
 	matches := re.FindStringSubmatch(body)
 	if len(matches) < 2 {
 		return ""

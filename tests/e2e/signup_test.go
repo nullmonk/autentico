@@ -148,7 +148,7 @@ func TestSelfSignup_StatePreserved(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	signupReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))
@@ -215,7 +215,7 @@ func TestSelfSignup_PromptCreate(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	signupReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))
@@ -315,7 +315,7 @@ func TestSelfSignup_PasswordMismatch(t *testing.T) {
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
 	form.Set("authorize_sig", authorizeSig)
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 
 	req, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))
 	require.NoError(t, err)
@@ -377,7 +377,7 @@ func TestSelfSignup_DuplicateUser(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	req, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))
@@ -448,7 +448,7 @@ func TestSelfSignup_UsernameIsEmail(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	req, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))
@@ -486,7 +486,7 @@ func TestSelfSignup_InvalidCSRF(t *testing.T) {
 	form.Set("confirm_password", "password123")
 	form.Set("redirect_uri", redirectURI)
 	form.Set("state", "s1")
-	form.Set("gorilla.csrf.Token", "forged-invalid-csrf-token")
+	form.Set("csrf_token", "forged-invalid-csrf-token")
 
 	req, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))
 	require.NoError(t, err)

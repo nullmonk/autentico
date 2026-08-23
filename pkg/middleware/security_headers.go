@@ -55,6 +55,23 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Pragma", "no-cache")
 
-		next.ServeHTTP(w, r)
+		wrappedWriter := &headerStrippingResponseWriter{ResponseWriter: w}
+		next.ServeHTTP(wrappedWriter, r)
 	})
+}
+
+type headerStrippingResponseWriter struct {
+	http.ResponseWriter
+}
+
+func (w *headerStrippingResponseWriter) WriteHeader(statusCode int) {
+	w.ResponseWriter.Header().Del("Server")
+	w.ResponseWriter.Header().Del("X-Powered-By")
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *headerStrippingResponseWriter) Write(b []byte) (int, error) {
+	w.ResponseWriter.Header().Del("Server")
+	w.ResponseWriter.Header().Del("X-Powered-By")
+	return w.ResponseWriter.Write(b)
 }

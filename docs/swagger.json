@@ -6448,6 +6448,9 @@
                 "profile": {
                     "type": "string"
                 },
+                "require_password_change": {
+                    "type": "boolean"
+                },
                 "role": {
                     "type": "string"
                 },
@@ -6525,6 +6528,9 @@
                 },
                 "profile": {
                     "type": "string"
+                },
+                "require_password_change": {
+                    "type": "boolean"
                 },
                 "role": {
                     "type": "string"

@@ -156,7 +156,7 @@ describe('Custom OAuth Path (/oidc)', () => {
       const authorizeSig = sigMatch ? sigMatch[1] : '';
 
       const cookies = authorizeResp.headers.getSetCookie();
-      const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+      const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
       expect(csrfCookie).toBeTruthy();
 
       // Step 2: POST /oidc/login
@@ -170,7 +170,7 @@ describe('Custom OAuth Path (/oidc)', () => {
         body: new URLSearchParams({
           username: ADMIN_USERNAME,
           password: ADMIN_PASSWORD,
-          'gorilla.csrf.Token': csrfToken,
+          'csrf_token': csrfToken,
           authorize_sig: authorizeSig,
           client_id: ADMIN_CLIENT_ID,
           redirect_uri: ADMIN_REDIRECT_URI,
