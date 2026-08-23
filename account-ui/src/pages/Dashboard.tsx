@@ -7,6 +7,15 @@ import Button from '../components/Button';
 import StatusDot from '../components/StatusDot';
 import { cn } from '../lib/utils';
 
+interface ApplicationNode {
+  name: string;
+  description?: string;
+  icon?: string;
+  url?: string;
+  groups?: string[];
+  items?: ApplicationNode[];
+}
+
 const Dashboard: React.FC = () => {
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -18,32 +27,96 @@ const Dashboard: React.FC = () => {
   });
   const { data: apps = [] } = useQuery({
     queryKey: ['applications'],
-    queryFn: () => api.get('/applications').then((res) => res.data.data),
+    queryFn: () => api.get('/applications').then((res) => res.data.data as ApplicationNode[]),
   });
 
   return (
     <div className="space-y-4" data-testid="account-dashboard">
       {apps && apps.length > 0 && (
         <Card title="Applications">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-            {apps.map((app: any) => (
-              <a
-                key={app.id}
-                href={app.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 p-3 rounded-lg border border-theme-fg/10 hover:bg-theme-fg/5 transition-colors"
-              >
-                {app.icon ? (
-                  <img src={app.icon} alt={app.name} className="w-8 h-8 object-contain rounded" />
-                ) : (
-                  <div className="w-8 h-8 rounded bg-theme-fg/10 flex items-center justify-center text-sm font-semibold">
-                    {app.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="font-medium text-sm flex-1 truncate">{app.name}</span>
-              </a>
-            ))}
+          <div className="mt-2 flex flex-col gap-6">
+            {(() => {
+              // We need to group contiguous standalone apps into a single grid.
+              const blocks: any[] = [];
+              let currentStandaloneGroup: ApplicationNode[] = [];
+
+              apps.forEach((node, idx) => {
+                if (node.items) {
+                  if (currentStandaloneGroup.length > 0) {
+                    blocks.push({ type: 'standalone-group', items: currentStandaloneGroup, id: `sg-${idx}` });
+                    currentStandaloneGroup = [];
+                  }
+                  blocks.push({ type: 'category', node, id: `cat-${idx}` });
+                } else {
+                  currentStandaloneGroup.push(node);
+                }
+              });
+              if (currentStandaloneGroup.length > 0) {
+                blocks.push({ type: 'standalone-group', items: currentStandaloneGroup, id: 'sg-last' });
+              }
+
+              return blocks.map((block) => {
+                if (block.type === 'category') {
+                  const node = block.node;
+                  return (
+                    <div key={block.id} className="space-y-2">
+                      {node.name && <h3 className="text-sm font-semibold text-theme-muted">{node.name}</h3>}
+                      {!node.name && <div className="h-2"></div> /* Spacer */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {node.items.map((app: any, j: number) => (
+                          <a
+                            key={j}
+                            href={app.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-3 p-3 rounded-lg border border-theme-fg/10 hover:bg-theme-fg/5 transition-colors"
+                          >
+                            {app.icon ? (
+                              <img src={app.icon} alt={app.name} className="w-8 h-8 object-contain rounded" />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-theme-fg/10 flex items-center justify-center text-sm font-semibold">
+                                {app.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="font-medium text-sm truncate">{app.name}</span>
+                              {app.description && <span className="text-xs text-theme-muted truncate">{app.description}</span>}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // standalone-group
+                  return (
+                    <div key={block.id} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {block.items.map((node: any, j: number) => (
+                        <a
+                          key={j}
+                          href={node.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-3 p-3 rounded-lg border border-theme-fg/10 hover:bg-theme-fg/5 transition-colors"
+                        >
+                          {node.icon ? (
+                            <img src={node.icon} alt={node.name} className="w-8 h-8 object-contain rounded" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-theme-fg/10 flex items-center justify-center text-sm font-semibold">
+                              {node.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="font-medium text-sm truncate">{node.name}</span>
+                            {node.description && <span className="text-xs text-theme-muted truncate">{node.description}</span>}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  );
+                }
+              });
+            })()}
           </div>
         </Card>
       )}

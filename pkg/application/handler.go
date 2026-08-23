@@ -4,176 +4,82 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/eugenioenko/autentico/pkg/appsettings"
 	"github.com/eugenioenko/autentico/pkg/audit"
+	"github.com/eugenioenko/autentico/pkg/db"
 	"github.com/eugenioenko/autentico/pkg/middleware"
 	"github.com/eugenioenko/autentico/pkg/utils"
 )
 
-// HandleListApplications returns all applications (admin endpoint)
-// @Summary List applications
-// @Description Returns all applications
+// HandleGetSettingsApplications returns all applications (admin endpoint)
+// @Summary Get applications config
+// @Description Returns the applications setting JSON
 // @Tags admin-applications
 // @Security AdminAuth
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @Router /admin/api/applications [get]
-func HandleListApplications(w http.ResponseWriter, r *http.Request) {
-	apps, err := List()
-	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to list applications")
-		return
+func HandleGetSettingsApplications(w http.ResponseWriter, r *http.Request) {
+	val, err := appsettings.GetSetting("applications")
+	if err != nil || val == "" {
+		val = "[]"
 	}
 
-	res := make([]ApplicationResponse, len(apps))
-	for i, app := range apps {
-		res[i] = app.ToResponse()
+	var nodes []ApplicationNode
+	if err := json.Unmarshal([]byte(val), &nodes); err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to parse applications")
+		return
+	}
+	if nodes == nil {
+		nodes = []ApplicationNode{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": res})
+	json.NewEncoder(w).Encode(map[string]interface{}{"data": nodes})
 }
 
-// HandleCreateApplication creates a new application (admin endpoint)
-// @Summary Create application
-// @Description Creates a new application
+// HandleUpdateSettingsApplications updates the applications JSON
+// @Summary Update applications
+// @Description Updates the applications setting JSON
 // @Tags admin-applications
 // @Security AdminAuth
 // @Accept json
 // @Produce json
-// @Param request body ApplicationCreateRequest true "Application details"
-// @Success 201 {object} map[string]interface{}
-// @Router /admin/api/applications [post]
-func HandleCreateApplication(w http.ResponseWriter, r *http.Request) {
-	var req ApplicationCreateRequest
+// @Param request body []ApplicationNode true "Applications tree"
+// @Success 204
+// @Router /admin/api/applications [put]
+func HandleUpdateSettingsApplications(w http.ResponseWriter, r *http.Request) {
+	var req []ApplicationNode
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
 		return
 	}
 
-	if err := ValidateApplicationCreateRequest(req); err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", err.Error())
+	if req == nil {
+		req = []ApplicationNode{}
+	}
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to serialize applications")
 		return
 	}
 
-	app, err := Create(req)
-	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to create application")
+	if err := appsettings.SetSetting("applications", string(b)); err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to save applications")
 		return
 	}
 
 	audit.Log(
-		audit.EventApplicationCreated,
+		audit.EventSettingsUpdated,
 		audit.ActorFromRequest(r),
-		"application",
-		app.ID,
-		audit.Detail("name", app.Name),
+		audit.TargetSettings,
+		"",
+		audit.Detail("key", "applications"),
 		utils.GetClientIP(r),
 	)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": app.ToResponse()})
-}
-
-// HandleGetApplication gets an application by ID (admin endpoint)
-// @Summary Get application
-// @Description Gets an application by ID
-// @Tags admin-applications
-// @Security AdminAuth
-// @Produce json
-// @Param id path string true "Application ID"
-// @Success 200 {object} map[string]interface{}
-// @Router /admin/api/applications/{id} [get]
-func HandleGetApplication(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	app, err := GetByID(id)
-	if err != nil {
-		if err.Error() == "application not found" {
-			utils.WriteErrorResponse(w, http.StatusNotFound, "not_found", "Application not found")
-			return
-		}
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to get application")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": app.ToResponse()})
-}
-
-// HandleUpdateApplication updates an application (admin endpoint)
-// @Summary Update application
-// @Description Updates an application
-// @Tags admin-applications
-// @Security AdminAuth
-// @Accept json
-// @Produce json
-// @Param id path string true "Application ID"
-// @Param request body ApplicationUpdateRequest true "Application updates"
-// @Success 200 {object} map[string]interface{}
-// @Router /admin/api/applications/{id} [put]
-func HandleUpdateApplication(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	var req ApplicationUpdateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", "Invalid request body")
-		return
-	}
-
-	if err := ValidateApplicationUpdateRequest(req); err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid_request", err.Error())
-		return
-	}
-
-	app, err := Update(id, req)
-	if err != nil {
-		if err.Error() == "application not found" {
-			utils.WriteErrorResponse(w, http.StatusNotFound, "not_found", "Application not found")
-			return
-		}
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to update application")
-		return
-	}
-
-	audit.Log(
-		audit.EventApplicationUpdated,
-		audit.ActorFromRequest(r),
-		"application",
-		app.ID,
-		audit.Detail("name", app.Name),
-		utils.GetClientIP(r),
-	)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": app.ToResponse()})
-}
-
-// HandleDeleteApplication deletes an application (admin endpoint)
-// @Summary Delete application
-// @Description Deletes an application
-// @Tags admin-applications
-// @Security AdminAuth
-// @Produce json
-// @Param id path string true "Application ID"
-// @Success 200 {object} map[string]interface{}
-// @Router /admin/api/applications/{id} [delete]
-func HandleDeleteApplication(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if err := Delete(id); err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to delete application")
-		return
-	}
-
-	audit.Log(
-		audit.EventApplicationDeleted,
-		audit.ActorFromRequest(r),
-		"application",
-		id,
-		nil,
-		utils.GetClientIP(r),
-	)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"message": "Application deleted successfully"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // HandleListUserApplications returns all applications for the current user based on their groups
@@ -191,20 +97,69 @@ func HandleListUserApplications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apps, err := ListForUser(authInfo.User.ID)
+	// Fetch user's groups
+	rows, err := db.GetDB().Query(`SELECT group_id FROM user_groups WHERE user_id = ?`, authInfo.User.ID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to list applications")
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to get user groups")
+		return
+	}
+	defer rows.Close()
+	userGroups := make(map[string]bool)
+	for rows.Next() {
+		var g string
+		if err := rows.Scan(&g); err == nil {
+			userGroups[g] = true
+		}
+	}
+
+	val, err := appsettings.GetSetting("applications")
+	if err != nil || val == "" {
+		val = "[]"
+	}
+
+	var nodes []ApplicationNode
+	if err := json.Unmarshal([]byte(val), &nodes); err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to parse applications")
 		return
 	}
 
-	res := make([]ApplicationResponse, len(apps))
-	for i, app := range apps {
-		res[i] = app.ToResponse()
-	}
-	if res == nil {
-		res = []ApplicationResponse{}
-	}
+	filtered := filterApplications(nodes, userGroups)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": res})
+	json.NewEncoder(w).Encode(map[string]interface{}{"data": filtered})
+}
+
+func filterApplications(nodes []ApplicationNode, userGroups map[string]bool) []ApplicationNode {
+	var result []ApplicationNode
+	for _, node := range nodes {
+		// If it has items, it's a category
+		if node.Items != nil { // Could check length, but keeping structure is good
+			filteredItems := filterApplications(node.Items, userGroups)
+			// Only include the category if it has items after filtering, or if it was empty to begin with?
+			// The requirements say: "empty categories are hidden", "filtered down based on the users roles"
+			// Wait, the requirements actually said: "if a category becomes empty after filtering, we won't render that category."
+			// BUT a category with no name is a spacer. Let's see if we should preserve empty spacers.
+			// Let's assume spacers without items are empty.
+			if len(filteredItems) > 0 {
+				node.Items = filteredItems
+				result = append(result, node)
+			}
+		} else {
+			// It's an app
+			hasAccess := len(node.Groups) == 0
+			for _, g := range node.Groups {
+				if userGroups[g] {
+					hasAccess = true
+					break
+				}
+			}
+			if hasAccess {
+				result = append(result, node)
+			}
+		}
+	}
+	if result == nil {
+		result = []ApplicationNode{}
+	}
+	return result
 }

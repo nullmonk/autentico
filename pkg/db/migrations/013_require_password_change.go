@@ -1,5 +1,5 @@
 package migrations
 
-const migration014 = `
+const migration013 = `
 	ALTER TABLE users ADD COLUMN require_password_change BOOLEAN DEFAULT FALSE;
 `

@@ -1,0 +1,90 @@
+--- admin-ui/src/pages/ApplicationsPage.tsx
++++ admin-ui/src/pages/ApplicationsPage.tsx
+@@ -236,7 +236,7 @@
+                     {/* Add Category Selection here so apps can be put in categories or moved. */}
+                     {(
+                        <Form.Item name="categoryId" label="Category">
+-                          <Select placeholder="Root (No Category)">
++                          <Select mode="tags" maxCount={1} placeholder="Select or create a Category">
+                              <Select.Option value="">None</Select.Option>
+                              {apps.map((app: any, idx: number) => {
+                                if (app.items) {
+@@ -107,6 +107,8 @@
+     const newNode: ApplicationNode = {
+       name: values.name || "",
+     };
++
++    let createdNewCatIndex: number | null = null;
+
+     if (values.type === "app") {
+       newNode.description = values.description;
+       newNode.url = values.url;
+       newNode.icon = values.icon;
+       newNode.groups = values.groups;
++
++      // Check if user typed a new category name (it won't be a numeric string index)
++      if (values.categoryId && values.categoryId.length > 0) {
++         const catValue = Array.isArray(values.categoryId) ? values.categoryId[0] : values.categoryId;
++         if (catValue !== "" && isNaN(parseInt(catValue, 10))) {
++            // Create new category
++            newApps.push({
++               name: catValue,
++               items: []
++            });
++            createdNewCatIndex = newApps.length - 1;
++         }
++      }
+     } else {
+       newNode.items = editingNode && editingNode.node.items ? editingNode.node.items : [];
+     }
+@@ -118,22 +120,30 @@
+       } else {
+         newApps[editingNode.parentIndex].items.splice(editingNode.index, 1);
+       }
+
+       // Then insert it into the new location
+-      if (values.type === "app" && values.categoryId !== "" && values.categoryId !== undefined) {
+-        const catIndex = parseInt(values.categoryId, 10);
+-        if (newApps[catIndex] && newApps[catIndex].items) {
+-          newApps[catIndex].items.push(newNode);
+-        } else {
+-          newApps.push(newNode);
+-        }
++      if (values.type === "app" && (values.categoryId !== "" && values.categoryId !== undefined || createdNewCatIndex !== null)) {
++        let targetIdx = createdNewCatIndex;
++        if (targetIdx === null) {
++           const catValue = Array.isArray(values.categoryId) ? values.categoryId[0] : values.categoryId;
++           targetIdx = parseInt(catValue, 10);
++        }
++        if (newApps[targetIdx] && newApps[targetIdx].items) {
++           newApps[targetIdx].items.push(newNode);
++        } else {
++           newApps.push(newNode);
++        }
+       } else {
+         // If it's a category, or an app with no category, add it to root
+@@ -141,13 +151,19 @@
+         }
+       }
+     } else {
+-      if (values.categoryId !== "" && values.categoryId !== undefined) {
+-        const catIndex = parseInt(values.categoryId, 10);
+-        if (newApps[catIndex] && newApps[catIndex].items) {
+-          newApps[catIndex].items.push(newNode);
+-        } else {
+-          newApps.push(newNode);
+-        }
++      if (values.categoryId !== "" && values.categoryId !== undefined || createdNewCatIndex !== null) {
++        let targetIdx = createdNewCatIndex;
++        if (targetIdx === null) {
++           const catValue = Array.isArray(values.categoryId) ? values.categoryId[0] : values.categoryId;
++           targetIdx = parseInt(catValue, 10);
++        }
++        if (newApps[targetIdx] && newApps[targetIdx].items) {
++           newApps[targetIdx].items.push(newNode);
++        } else {
++           newApps.push(newNode);
++        }
+       } else {
+         newApps.push(newNode);
+       }
