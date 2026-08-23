@@ -201,7 +201,7 @@ export default function ApplicationsPage() {
       title: "Actions",
       key: "actions",
       render: (_: any, record: any) => {
-        const listLength = record.parentIndex === -1 ? apps.length : apps[record.parentIndex].items.length;
+        const listLength = record.parentIndex === -1 ? apps.length : (apps[record.parentIndex]?.items?.length || 0);
         const canMoveUp = record.index > 0;
         const canMoveDown = record.index < listLength - 1;
 
