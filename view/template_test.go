@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -270,5 +272,55 @@ func TestThemeCSSHandler(t *testing.T) {
 		ThemeCSSHandler().ServeHTTP(rr2, req2)
 		assert.Equal(t, http.StatusNotModified, rr2.Code)
 		assert.Empty(t, rr2.Body.String())
+	})
+}
+
+// TestResolveThemeCSS_TemplatesDirFallback covers the fallback added so a
+// theme can ship as a single TemplatesDir/static/theme.css file: the
+// theme_css_inline/theme_css_file admin setting always wins when set, and
+// only when it's empty does a TemplatesDir/static/theme.css on disk apply.
+func TestResolveThemeCSS_TemplatesDirFallback(t *testing.T) {
+	prevCSS := config.Values.ThemeCssResolved
+	prevDir := config.Bootstrap.TemplatesDir
+	t.Cleanup(func() {
+		config.Values.ThemeCssResolved = prevCSS
+		config.Bootstrap.TemplatesDir = prevDir
+	})
+
+	dir := t.TempDir()
+	staticDir := filepath.Join(dir, "static")
+	assert.NoError(t, os.MkdirAll(staticDir, 0755))
+	assert.NoError(t, os.WriteFile(filepath.Join(staticDir, "theme.css"), []byte("body{color:green}"), 0644))
+
+	t.Run("no setting, no TemplatesDir: nothing resolved", func(t *testing.T) {
+		config.Values.ThemeCssResolved = ""
+		config.Bootstrap.TemplatesDir = ""
+
+		css, ok := resolveThemeCSS()
+		assert.False(t, ok)
+		assert.Empty(t, css)
+	})
+
+	t.Run("no setting: falls back to TemplatesDir/static/theme.css", func(t *testing.T) {
+		config.Values.ThemeCssResolved = ""
+		config.Bootstrap.TemplatesDir = dir
+
+		css, ok := resolveThemeCSS()
+		assert.True(t, ok)
+		assert.Equal(t, "body{color:green}", css)
+
+		req := httptest.NewRequest(http.MethodGet, "/oauth2/static/theme.css", nil)
+		rr := httptest.NewRecorder()
+		ThemeCSSHandler().ServeHTTP(rr, req)
+		assert.Equal(t, "body{color:green}", rr.Body.String())
+	})
+
+	t.Run("admin setting wins over TemplatesDir override", func(t *testing.T) {
+		config.Values.ThemeCssResolved = "body{color:red}"
+		config.Bootstrap.TemplatesDir = dir
+
+		css, ok := resolveThemeCSS()
+		assert.True(t, ok)
+		assert.Equal(t, "body{color:red}", css)
 	})
 }
