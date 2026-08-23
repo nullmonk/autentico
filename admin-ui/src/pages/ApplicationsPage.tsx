@@ -243,7 +243,7 @@ export default function ApplicationsPage() {
         </Col>
         <Col>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Add Item
+            Create Application
           </Button>
         </Col>
       </Row>
@@ -259,7 +259,7 @@ export default function ApplicationsPage() {
       </Card>
 
       <Modal
-        title={editingNode ? "Edit Item" : "Add Item"}
+        title={editingNode ? (form.getFieldValue("type") === "category" ? "Edit Category" : "Edit Application") : "Create Application"}
         open={isModalVisible}
         onOk={() => form.submit()}
         onCancel={() => setIsModalVisible(false)}
@@ -270,11 +270,9 @@ export default function ApplicationsPage() {
           layout="vertical"
           onFinish={onFinish}
         >
-          <Form.Item name="type" label="Type" rules={[{ required: true }]}>
-            <Select disabled={!!editingNode}>
-              <Select.Option value="app">Application</Select.Option>
-              <Select.Option value="category">Category</Select.Option>
-            </Select>
+          {/* Hide the type selector since users only create apps now (categories created dynamically) */}
+          <Form.Item name="type" hidden>
+            <Input />
           </Form.Item>
 
           <Form.Item
