@@ -53,7 +53,7 @@ export default function ApplicationsPage() {
       url: node.url,
       icon: node.icon,
       groups: node.groups || [],
-      categoryId: parentIndex === -1 ? "" : parentIndex.toString(),
+      categoryId: parentIndex === -1 ? [] : [parentIndex.toString()],
     });
     setIsModalVisible(true);
   };
@@ -61,7 +61,7 @@ export default function ApplicationsPage() {
   const handleCreate = () => {
     setEditingNode(null);
     form.resetFields();
-    form.setFieldsValue({ type: "app", categoryId: "" });
+    form.setFieldsValue({ type: "app", categoryId: [] });
     setIsModalVisible(true);
   };
 
@@ -102,11 +102,26 @@ export default function ApplicationsPage() {
       name: values.name || "",
     };
 
+    let createdNewCatIndex: number | null = null;
+    let selectedCatValue = "";
+    if (values.categoryId && values.categoryId.length > 0) {
+      selectedCatValue = values.categoryId[values.categoryId.length - 1]; // get the last selected/typed tag
+    }
+
     if (values.type === "app") {
       newNode.description = values.description;
       newNode.url = values.url;
       newNode.icon = values.icon;
       newNode.groups = values.groups;
+
+      if (selectedCatValue !== "" && isNaN(parseInt(selectedCatValue, 10))) {
+        // Create new category
+        newApps.push({
+          name: selectedCatValue,
+          items: []
+        });
+        createdNewCatIndex = newApps.length - 1;
+      }
     } else {
       newNode.items = editingNode && editingNode.node.items ? editingNode.node.items : [];
     }
@@ -120,27 +135,28 @@ export default function ApplicationsPage() {
       }
 
       // Then insert it into the new location
-      if (values.type === "app" && values.categoryId !== "" && values.categoryId !== undefined) {
-        const catIndex = parseInt(values.categoryId, 10);
-        if (newApps[catIndex] && newApps[catIndex].items) {
-          newApps[catIndex].items.push(newNode);
+      if (values.type === "app" && (selectedCatValue !== "" || createdNewCatIndex !== null)) {
+        let targetIdx = createdNewCatIndex !== null ? createdNewCatIndex : parseInt(selectedCatValue, 10);
+
+        if (newApps[targetIdx] && newApps[targetIdx].items) {
+          newApps[targetIdx].items.push(newNode);
         } else {
           newApps.push(newNode);
         }
       } else {
         // If it's a category, or an app with no category, add it to root
         // If it was already at root, try to put it back exactly where it was (unless we are reordering)
-        if (editingNode.parentIndex === -1 && (values.type === "category" || values.categoryId === "")) {
+        if (editingNode.parentIndex === -1 && (values.type === "category" || selectedCatValue === "")) {
           newApps.splice(editingNode.index, 0, newNode);
         } else {
           newApps.push(newNode);
         }
       }
     } else {
-      if (values.categoryId !== "" && values.categoryId !== undefined) {
-        const catIndex = parseInt(values.categoryId, 10);
-        if (newApps[catIndex] && newApps[catIndex].items) {
-          newApps[catIndex].items.push(newNode);
+      if (selectedCatValue !== "" || createdNewCatIndex !== null) {
+        let targetIdx = createdNewCatIndex !== null ? createdNewCatIndex : parseInt(selectedCatValue, 10);
+        if (newApps[targetIdx] && newApps[targetIdx].items) {
+          newApps[targetIdx].items.push(newNode);
         } else {
           newApps.push(newNode);
         }
@@ -303,11 +319,10 @@ export default function ApplicationsPage() {
                     {/* Add Category Selection here so apps can be put in categories or moved. */}
                     {(
                        <Form.Item name="categoryId" label="Category">
-                          <Select placeholder="Root (No Category)">
-                             <Select.Option value="">None</Select.Option>
+                          <Select mode="tags" maxCount={1} placeholder="Select or type a new category (Empty = Root)">
                              {apps.map((app: any, idx: number) => {
                                if (app.items) {
-                                 return <Select.Option key={idx} value={idx}>{app.name || "(Spacer)"}</Select.Option>
+                                 return <Select.Option key={idx} value={idx.toString()}>{app.name || "(Spacer)"}</Select.Option>
                                }
                                return null;
                              })}

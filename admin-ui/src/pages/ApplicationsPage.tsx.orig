@@ -53,6 +53,7 @@ export default function ApplicationsPage() {
       url: node.url,
       icon: node.icon,
       groups: node.groups || [],
+      categoryId: parentIndex === -1 ? "" : parentIndex.toString(),
     });
     setIsModalVisible(true);
   };
@@ -111,10 +112,29 @@ export default function ApplicationsPage() {
     }
 
     if (editingNode) {
+      // First, remove it from the old location
       if (editingNode.parentIndex === -1) {
-        newApps[editingNode.index] = newNode;
+        newApps.splice(editingNode.index, 1);
       } else {
-        newApps[editingNode.parentIndex].items[editingNode.index] = newNode;
+        newApps[editingNode.parentIndex].items.splice(editingNode.index, 1);
+      }
+
+      // Then insert it into the new location
+      if (values.type === "app" && values.categoryId !== "" && values.categoryId !== undefined) {
+        const catIndex = parseInt(values.categoryId, 10);
+        if (newApps[catIndex] && newApps[catIndex].items) {
+          newApps[catIndex].items.push(newNode);
+        } else {
+          newApps.push(newNode);
+        }
+      } else {
+        // If it's a category, or an app with no category, add it to root
+        // If it was already at root, try to put it back exactly where it was (unless we are reordering)
+        if (editingNode.parentIndex === -1 && (values.type === "category" || values.categoryId === "")) {
+          newApps.splice(editingNode.index, 0, newNode);
+        } else {
+          newApps.push(newNode);
+        }
       }
     } else {
       if (values.categoryId !== "" && values.categoryId !== undefined) {
@@ -181,7 +201,7 @@ export default function ApplicationsPage() {
       title: "Actions",
       key: "actions",
       render: (_: any, record: any) => {
-        const listLength = record.parentIndex === -1 ? apps.length : apps[record.parentIndex].items.length;
+        const listLength = record.parentIndex === -1 ? apps.length : (apps[record.parentIndex]?.items?.length || 0);
         const canMoveUp = record.index > 0;
         const canMoveDown = record.index < listLength - 1;
 
@@ -280,8 +300,8 @@ export default function ApplicationsPage() {
                       />
                     </Form.Item>
 
-                    {/* Add Category Selection here so apps can be put in categories when creating. */}
-                    {!editingNode && (
+                    {/* Add Category Selection here so apps can be put in categories or moved. */}
+                    {(
                        <Form.Item name="categoryId" label="Category">
                           <Select placeholder="Root (No Category)">
                              <Select.Option value="">None</Select.Option>
