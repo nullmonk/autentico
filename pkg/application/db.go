@@ -167,12 +167,15 @@ func List() ([]Application, error) {
 }
 
 func ListForUser(userID string) ([]Application, error) {
+	// An application with no groups assigned is public - visible to every
+	// user - so the group join is a LEFT JOIN and rows with no group at all
+	// (ag.group_id IS NULL) pass through unconditionally.
 	rows, err := db.GetDB().Query(`
 		SELECT DISTINCT a.id, a.name, a.icon, a.url, a.created_at, a.updated_at
 		FROM applications a
-		JOIN application_groups ag ON a.id = ag.application_id
-		JOIN user_groups ug ON ag.group_id = ug.group_id
-		WHERE ug.user_id = ?
+		LEFT JOIN application_groups ag ON a.id = ag.application_id
+		LEFT JOIN user_groups ug ON ug.group_id = ag.group_id AND ug.user_id = ?
+		WHERE ag.group_id IS NULL OR ug.user_id IS NOT NULL
 		ORDER BY a.name ASC
 	`, userID)
 	if err != nil {

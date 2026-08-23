@@ -313,15 +313,6 @@ export default function GroupsPage() {
     }));
   }, []);
 
-  if (membersGroup) {
-    return (
-      <GroupMembersView
-        group={membersGroup}
-        onBack={() => setMembersGroup(null)}
-      />
-    );
-  }
-
   const rawColumns1: ColumnsType<Group> = [
     {
       title: "Name",
@@ -392,6 +383,14 @@ export default function GroupsPage() {
   ];
   const columns = useHiddenColumns('/groups', rawColumns1);
 
+  if (membersGroup) {
+    return (
+      <GroupMembersView
+        group={membersGroup}
+        onBack={() => setMembersGroup(null)}
+      />
+    );
+  }
 
   if (error) {
     return <Alert type="error" message="Failed to load groups" />;

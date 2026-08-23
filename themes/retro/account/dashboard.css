@@ -196,6 +196,14 @@
   border-radius: var(--radius);
 }
 
+.app-icon-font {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--color-primary-bg);
+}
+
 .app-icon-placeholder {
   display: flex;
   align-items: center;

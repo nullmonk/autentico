@@ -33,6 +33,15 @@ function apiError(json, fallback) {
   return (json && (json.error_description || json.error)) || fallback;
 }
 
+// An app's icon is either a URL to an image, or an authcrunch-style icon
+// class list (e.g. "las la-user", matching authcrunch's `icon "las la-user"`
+// UI-link syntax). URLs always contain a "/" (path, "://", or "data:"); icon
+// class lists are bare space-separated tokens, so that's enough to tell them
+// apart without a dedicated field.
+function isIconUrl(icon) {
+  return icon.indexOf('/') !== -1;
+}
+
 function renderApplications(apps) {
   const list = document.getElementById('apps-list');
   if (!apps || apps.length === 0) {
@@ -40,9 +49,14 @@ function renderApplications(apps) {
     return;
   }
   list.innerHTML = apps.map((app) => {
-    const icon = app.icon
-      ? `<img class="app-icon" src="${escapeHtml(app.icon)}" alt="" />`
-      : `<span class="app-icon app-icon-placeholder">${escapeHtml((app.name || '?').charAt(0).toUpperCase())}</span>`;
+    let icon;
+    if (app.icon && isIconUrl(app.icon)) {
+      icon = `<img class="app-icon" src="${escapeHtml(app.icon)}" alt="" />`;
+    } else if (app.icon) {
+      icon = `<i class="app-icon app-icon-font ${escapeHtml(app.icon)}" aria-hidden="true"></i>`;
+    } else {
+      icon = `<span class="app-icon app-icon-placeholder">${escapeHtml((app.name || '?').charAt(0).toUpperCase())}</span>`;
+    }
     const href = app.url ? escapeHtml(app.url) : '#';
     return `<a class="app-card" href="${href}" target="_blank" rel="noopener noreferrer">${icon}<span class="app-name">${escapeHtml(app.name)}</span></a>`;
   }).join('');
