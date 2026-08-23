@@ -1,0 +1,65 @@
+---
+title: Quickstart
+description: Get Autentico running in under a minute.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## 1. Start the server
+
+<Tabs>
+<TabItem value="Binary" label="Binary">
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/eugenioenko/autentico/releases), then:
+
+```bash
+chmod +x autentico
+./autentico start --auto-setup
+```
+
+</TabItem>
+<TabItem value="Docker" label="Docker">
+
+```bash
+docker run -p 9999:9999 -v autentico-data:/app/data \
+  ghcr.io/eugenioenko/autentico:latest start --auto-setup
+```
+
+</TabItem>
+</Tabs>
+
+The `--auto-setup` flag generates a `.env` with fresh secrets (RSA key, CSRF, token signing) on first run. On subsequent starts, the existing configuration is reused.
+
+## 2. Create your admin account
+
+<Tabs>
+<TabItem value="Browser" label="Browser">
+
+Navigate to [http://localhost:9999/onboard](http://localhost:9999/onboard) and create your first admin account.
+
+You'll be redirected to the **Admin UI**. From there you can register clients, manage users, and configure settings.
+
+</TabItem>
+<TabItem value="CLI" label="CLI">
+
+```bash
+./autentico onboard --username admin --password yourpassword --email admin@example.com
+```
+
+Credentials can also be passed via environment variables (`AUTENTICO_ADMIN_USERNAME`, `AUTENTICO_ADMIN_PASSWORD`, `AUTENTICO_ADMIN_EMAIL`).
+
+</TabItem>
+</Tabs>
+
+:::tip
+For production, set `AUTENTICO_APP_URL` to your public HTTPS URL (e.g. `https://auth.example.com`). Secure cookies require HTTPS — pass `--dev` only for local HTTP development. See [Configuration](/configuration/overview/) for details.
+
+:::
+
+## What's next?
+
+- [Registering clients](/clients/registering/) — connect your app
+- [Authorization Code + PKCE](/protocol/authorization-code/) — the standard OAuth2 flow
+- [Configuration reference](/configuration/overview/) — bootstrap, runtime, and per-client settings
+- [Authentication modes](/authentication/overview/) — password, passkeys, MFA

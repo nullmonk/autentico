@@ -1,0 +1,142 @@
+---
+title: Registering a Client
+description: How to register an OAuth2 client in Autentico via the Admin UI or API.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Via Admin UI
+
+Go to **Admin UI → Clients → New Client**. Fill in the required fields and click **Create**. The UI generates `client_id` and `client_secret` (for confidential clients) automatically. Save the secret immediately — it is only shown once.
+
+## Via API
+
+<Tabs>
+<TabItem value="Public client (SPA/mobile)" label="Public client (SPA/mobile)">
+
+```bash
+curl -X POST https://auth.example.com/oauth2/register \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_name": "My SPA",
+    "redirect_uris": ["https://app.example.com/callback"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "response_types": ["code"],
+    "client_type": "public",
+    "token_endpoint_auth_method": "none"
+  }'
+```
+
+</TabItem>
+<TabItem value="Confidential client (server-side)" label="Confidential client (server-side)">
+
+```bash
+curl -X POST https://auth.example.com/oauth2/register \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_name": "My Server App",
+    "redirect_uris": ["https://app.example.com/auth/callback"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "response_types": ["code"],
+    "client_type": "confidential",
+    "token_endpoint_auth_method": "client_secret_basic"
+  }'
+```
+
+</TabItem>
+</Tabs>
+
+**Response:**
+
+```json
+{
+  "client_id": "a1b2c3d4-...",
+  "client_secret": "sk_live_...",
+  "client_secret_expires_at": 0,
+  "client_name": "My Server App",
+  "client_type": "confidential",
+  "redirect_uris": ["https://app.example.com/auth/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "client_secret_basic"
+}
+```
+
+:::caution
+Store the `client_secret` immediately — it is only returned once at registration time.
+
+:::
+
+---
+
+## Fields
+
+### `client_name`
+**Required.**
+
+Human-readable name for the client, shown in the Admin UI and logs.
+
+### `client_id`
+
+Custom client ID. Auto-generated (UUID) if omitted. Must be unique across all clients.
+
+### `client_type`
+Default: `confidential`
+
+- `confidential` — server-side apps that can keep a secret. A `client_secret` is generated and must be presented at the token endpoint.
+- `public` — browser apps (SPAs) or mobile apps that cannot safely store a secret. No secret is issued; use PKCE instead.
+
+See [Client Types](/clients/client-types/) for details.
+
+### `redirect_uris`
+**Required.**
+
+Array of allowed callback URLs. The `redirect_uri` in each authorization request must exactly match one of these values. No wildcards. Maximum 10 URIs per client.
+
+### `grant_types`
+Default: `["authorization_code", "refresh_token"]`
+
+OAuth2 flows the client is permitted to use:
+
+| Value | Description |
+|---|---|
+| `authorization_code` | Standard browser-based login flow (use with PKCE for public clients) |
+| `refresh_token` | Exchange a refresh token for new access tokens |
+| `client_credentials` | Server-to-server authentication (no user involved) |
+| `password` | Resource Owner Password Credentials — direct username/password exchange. Legacy; avoid for new integrations |
+
+### `response_types`
+Default: `["code"]`
+
+What the authorization endpoint returns. For the standard Authorization Code flow use `["code"]`. `token` and `id_token` are for implicit/hybrid flows (not recommended for new clients).
+
+### `scopes`
+Default: `openid profile email`
+
+Space-separated string of scopes the client is allowed to request. Standard OIDC scopes: `openid`, `profile`, `email`, `address`, `phone`, `offline_access`. Custom scopes can also be defined.
+
+### `token_endpoint_auth_method`
+Default: `client_secret_basic`
+
+How the client authenticates at the token endpoint:
+
+| Value | Description |
+|---|---|
+| `client_secret_basic` | Credentials sent as HTTP Basic auth header (recommended for confidential clients) |
+| `client_secret_post` | Credentials sent in the POST body |
+| `none` | No authentication — for public clients using PKCE |
+
+### `consent_required`
+Default: `false`
+
+Boolean. When `true`, the user is shown a consent screen to approve the requested scopes before an authorization code is issued. Consent is remembered per user+client+scope combination — subsequent logins skip the consent screen unless the requested scopes change.
+
+### `post_logout_redirect_uris`
+Default: `[]`
+
+Array of URIs the client may redirect to after RP-initiated logout. The `post_logout_redirect_uri` parameter in a logout request must exactly match one of these values.
+
+See [Per-Client Configuration](/clients/per-client-configuration/) for fields that override global settings.

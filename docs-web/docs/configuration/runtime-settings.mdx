@@ -1,0 +1,418 @@
+---
+title: Runtime Settings
+description: Complete reference for all runtime settings stored in the database and configurable via the Admin UI without restarting the server.
+---
+
+
+
+Runtime settings live in the `settings` table in the SQLite database. They are loaded into memory at startup and can be updated at any time via the Admin UI or API — changes take effect on the next request without a server restart.
+
+## Updating settings
+
+**Via Admin UI**: Settings → edit any field → Save.
+
+**Via API**:
+
+```bash
+# Read all current settings
+curl -H "Authorization: Bearer $ADMIN_TOKEN" \
+  https://auth.example.com/admin/api/settings
+
+# Update one or more settings
+curl -X PUT \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"require_mfa": "true", "mfa_method": "totp"}' \
+  https://auth.example.com/admin/api/settings
+```
+
+All values are stored as strings. Durations use Go duration format (`15m`, `1h`, `720h`).
+
+:::caution
+The `onboarded` and `private_key` keys are protected and cannot be set via the API.
+
+:::
+
+---
+
+## Token lifetimes
+
+### `access_token_expiration`
+Default: `15m`
+
+Lifetime of issued access tokens. Short values are safer; relying parties use the refresh token to obtain new ones.
+
+### `refresh_token_expiration`
+Default: `720h`
+
+Lifetime of refresh tokens (30 days by default). Controls how long a user stays logged in without re-authenticating.
+
+### `authorization_code_expiration`
+Default: `10m`
+
+Lifetime of one-time authorization codes issued during the auth code flow. Should be short.
+
+---
+
+## Authentication
+
+### `auth_mode`
+Default: `password`
+
+Authentication mode. One of `password`, `password_and_passkey`, or `passkey_only`. See [Authentication Overview](/authentication/overview/).
+
+### `allow_self_signup`
+Default: `false`
+
+Allow end users to register accounts themselves on the login page.
+
+### `allow_username_change`
+Default: `false`
+
+Allow users to change their own username from the self-service account portal.
+
+### `allow_email_change`
+Default: `false`
+
+Allow users to change their own email address from the self-service account portal.
+
+### `allow_self_service_deletion`
+Default: `false`
+
+Allow users to delete their own account immediately without admin approval.
+
+### `access_token_audience`
+Default: `[]`
+
+JSON array of audience values (`aud` claim) added to access tokens. Example: `["https://api.example.com"]`.
+
+---
+
+## Email verification
+
+### `require_email_verification`
+Default: `false`
+
+Require users to verify their email address before they can log in. Admins are exempt. Requires SMTP to be configured.
+
+### `email_verification_expiration`
+Default: `24h`
+
+How long an email verification link remains valid.
+
+### `password_reset_expiration`
+Default: `1h`
+
+How long a password reset link remains valid. Only sent to users with a verified email address.
+
+---
+
+## SSO sessions
+
+### `sso_enabled`
+Default: `true`
+
+Enable Single Sign-On. When enabled, returning users with an active session are automatically re-authorized without entering credentials. When disabled, users must log in on every authorization request. Device sessions are still tracked regardless of this setting.
+
+### `sso_session_idle_timeout`
+Default: `4h`
+
+IdP session idle timeout. Users who return within the timeout window are automatically re-authorized without entering credentials. `0` means sessions never expire from inactivity (infinite idle timeout).
+
+### `sso_session_max_age`
+Default: `720h`
+
+Absolute maximum lifetime for IdP sessions, regardless of activity. Once a session exceeds this age since creation, the user must re-authenticate. `0` means no maximum age (sessions live indefinitely as long as they remain within the idle timeout). Both `sso_session_idle_timeout` and `sso_session_max_age` must pass for a session to be valid.
+
+The session cookie's `Expires` attribute is set to match this value at login time. Changing the setting does not update cookies already issued — increasing it will not extend existing sessions, and decreasing it relies on the server-side check to reject sessions whose cookie has not yet expired.
+
+---
+
+## Account security
+
+### `account_lockout_max_attempts`
+Default: `5`
+
+Number of consecutive failed login attempts before the account is locked. Set to `0` to disable lockout.
+
+### `account_lockout_duration`
+Default: `15m`
+
+How long an account remains locked after hitting the attempt threshold.
+
+---
+
+## CORS
+
+### `cors_allowed_origins`
+Default: _(empty)_
+
+Comma-separated list of origins allowed to make cross-origin requests (e.g. `https://app.example.com,https://admin.example.com`). Use `*` to allow all origins (not recommended for production). Leave empty to disable CORS entirely — useful when a reverse proxy handles CORS.
+
+Configurable via the dedicated **CORS** page in the Admin UI sidebar.
+
+---
+
+## Security
+
+### `pkce_enforce_s256`
+Default: `true`
+
+Enforce PKCE with the S256 code challenge method for all clients. When disabled, clients may use `code_challenge_method=plain`, which provides no security benefit — the verifier equals the challenge and is visible in the authorization request. Only disable for backward compatibility with legacy clients that cannot support S256 (RFC 7636).
+
+---
+
+## MFA
+
+### `require_mfa`
+Default: `false`
+
+Require MFA for all users after password authentication. Users can also enroll in TOTP voluntarily without this being enabled.
+
+### `mfa_method`
+Default: `totp`
+
+MFA method to use. One of `totp` (authenticator app), `email` (email OTP), or `both` (prefers TOTP when enrolled, falls back to email).
+
+---
+
+## SMTP (required for email OTP)
+
+### `smtp_host`
+Default: _(empty)_
+
+SMTP server hostname.
+
+### `smtp_port`
+Default: `587`
+
+SMTP server port.
+
+### `smtp_username`
+Default: _(empty)_
+
+SMTP authentication username.
+
+### `smtp_password`
+Default: _(empty)_
+
+SMTP authentication password. Not returned by the settings GET endpoint.
+
+### `smtp_from`
+Default: _(empty)_
+
+From address for outbound OTP emails (e.g. `auth@example.com`).
+
+---
+
+## Trusted devices
+
+### `trust_device_enabled`
+Default: `false`
+
+Show a "Trust this device" checkbox on the MFA page. When checked, the device is trusted for `trust_device_expiration`.
+
+### `trust_device_expiration`
+Default: `720h`
+
+How long a trusted device token remains valid (30 days by default).
+
+---
+
+## Passkeys
+
+### `passkey_rp_name`
+Default: `Autentico`
+
+WebAuthn relying party name displayed in the browser's passkey prompt.
+
+### `passkey_login_mode`
+Default: `username_first`
+
+Controls how passkeys are presented on the login page. Only applies when `auth_mode` includes passkeys (`password_and_passkey` or `passkey_only`). One of:
+
+- **`username_first`** — User enters their username first, then authenticates with their registered passkey. This is the default and most compatible mode.
+- **`discoverable`** — A "Sign in with passkey" button triggers a usernameless login. The browser/authenticator shows all passkeys registered for this site without needing a username. Works best with platform authenticators (Apple, Windows Hello) and hardware security keys.
+- **`conditional`** — The browser automatically surfaces registered passkeys in the username field's autofill dropdown when the login page loads. This is the most seamless experience for users with password managers that support passkeys. The username and password fields remain available as fallback.
+- **`passkey_only`** — No username or password fields are shown. Only discoverable passkey login is available. Requires `auth_mode` set to `passkey_only` to fully hide the username field; if `auth_mode` is `password_and_passkey`, the username field remains visible for password fallback.
+
+See [Passkeys — Login modes](/authentication/passkeys/#login-modes) for detailed guidance on choosing a mode.
+
+---
+
+## Input validation
+
+### `validation_min_username_length`
+Default: `4`
+
+Minimum username length at registration.
+
+### `validation_max_username_length`
+Default: `64`
+
+Maximum username length.
+
+### `validation_min_password_length`
+Default: `6`
+
+Minimum password length.
+
+### `validation_max_password_length`
+Default: `64`
+
+Maximum password length.
+
+---
+
+## Profile fields
+
+Profile field settings control which OIDC-standard fields are collected on the signup form and shown in the self-service account portal. Each field accepts one of three values: `hidden` (never shown), `optional` (shown but not required), or `required` (must be filled).
+
+### `profile_field_email`
+Default: `optional`
+
+Controls the email field. Also accepts `is_username` to treat the username field as the email address (stored in both columns).
+
+### `profile_field_given_name`
+Default: `optional`
+
+Controls the `given_name` (first name) OIDC claim field.
+
+### `profile_field_family_name`
+Default: `optional`
+
+Controls the `family_name` (last name) OIDC claim field.
+
+### `profile_field_middle_name`
+Default: `hidden`
+
+Controls the `middle_name` OIDC claim field.
+
+### `profile_field_nickname`
+Default: `hidden`
+
+Controls the `nickname` OIDC claim field (a casual name the user prefers to go by, e.g. a shortened first name or alias).
+
+### `profile_field_website`
+Default: `hidden`
+
+Controls the `website` OIDC claim field (URL to the user's personal or professional website).
+
+### `profile_field_profile`
+Default: `hidden`
+
+Controls the `profile` OIDC claim field (URL to the user's profile page, e.g. a social media profile).
+
+### `profile_field_gender`
+Default: `hidden`
+
+Controls the `gender` OIDC claim field. Stored as a free-form string — Autentico imposes no specific vocabulary.
+
+### `profile_field_birthdate`
+Default: `hidden`
+
+Controls the `birthdate` OIDC claim field. Value should be in ISO 8601 format (`YYYY-MM-DD`).
+
+### `profile_field_phone`
+Default: `optional`
+
+Controls the `phone_number` OIDC claim field.
+
+### `profile_field_picture`
+Default: `optional`
+
+Controls the `picture` OIDC claim field (URL to an avatar image).
+
+### `profile_field_locale`
+Default: `optional`
+
+Controls the `locale` OIDC claim field (e.g. `en-US`).
+
+### `profile_field_address`
+Default: `optional`
+
+Controls all address fields (`address_street`, `address_city`, `address_region`, `address_postal_code`, `address_country`) as a group.
+
+### `signup_show_optional_fields`
+Default: `false`
+
+When `false` (default), optional profile fields are hidden during signup to keep the form minimal. Required fields are always shown regardless of this setting.
+
+---
+
+## Cleanup
+
+Autentico runs a background goroutine that periodically purges expired records from all transient tables (tokens, sessions, auth codes, MFA challenges, passkey challenges, trusted devices).
+
+### `cleanup_interval`
+Default: `6h`
+
+How often the cleanup job runs.
+
+### `cleanup_retention`
+Default: `24h`
+
+Minimum age of an expired record before it is eligible for deletion. Protects very recently expired records from being purged before any in-flight operations complete.
+
+---
+
+## Audit log
+
+### `audit_log_retention`
+Default: `720h`
+
+Controls how long audit log events are kept. `0` disables audit logging entirely (no events recorded). `-1` enables logging and keeps events forever. Any Go duration value (e.g. `720h` for 30 days) enables logging and automatically purges events older than that duration during cleanup.
+
+---
+
+## Theming
+
+### `theme_title`
+Default: `Autentico`
+
+Page title shown on the login, MFA, and signup pages. Also used as the TOTP issuer name in authenticator apps.
+
+### `theme_logo_url`
+Default: _(empty)_
+
+URL to a logo image displayed above the login form.
+
+### `theme_css_inline`
+Default: _(empty)_
+
+Inline CSS injected into the `<style>` tag on login pages. Use CSS variables to override the default theme.
+
+### `theme_css_file`
+Default: _(empty)_
+
+Path to a CSS file on disk, loaded at runtime. Takes precedence over `theme_css_inline` if both are set.
+
+See [Login Page Theming](/authentication/overview/#login-page-theming) for the available CSS variables.
+
+### `theme_brand_color`
+Default: `#ff7b00`
+
+Brand color used as the primary accent color on all server-rendered pages (login, signup, MFA, onboarding) and in transactional emails (verification, password reset, OTP codes). Overrides the `--color-primary-bg` CSS variable for buttons, checkboxes, and focus rings.
+
+### `theme_tagline`
+Default: _(empty)_
+
+Optional tagline displayed below the logo and title on the login, signup, and onboarding pages, as well as in transactional emails.
+
+### `email_footer_text`
+Default: _(empty)_
+
+Optional text shown in the footer of transactional emails (e.g. copyright notice, company address). Supports multiple lines.
+
+### `footer_links`
+Default: `[]`
+
+JSON array of links shown in the footer of login and signup pages, and in transactional emails. Each entry has a `label` and `url`. Links are rendered in order. Empty array means no footer links.
+
+```json
+[
+  {"label": "Terms of Service", "url": "https://example.com/terms"},
+  {"label": "Privacy Policy", "url": "https://example.com/privacy"},
+  {"label": "Help", "url": "https://example.com/help"}
+]
+```
