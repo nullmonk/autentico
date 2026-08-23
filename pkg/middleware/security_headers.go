@@ -31,12 +31,15 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		// form-action must allow any origin because the login form redirects to
 		// the client's redirect_uri, which is on a different origin. The redirect
 		// URI is validated against the registered client in the authorize handler.
+		// cdn.jsdelivr.net is allow-listed in style-src/font-src alongside Google
+		// Fonts for the retro theme's icon font (themes/retro/account/index.html),
+		// which is served as a static file with no template access to the nonce.
 		nonce := cspnonce.Get(r.Context())
 		scriptSrc := "'self'"
 		if nonce != "" {
 			scriptSrc = "'self' 'nonce-" + nonce + "'"
 		}
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src "+scriptSrc+"; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self'; form-action *; frame-ancestors 'none'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src "+scriptSrc+"; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self'; form-action *; frame-ancestors 'none'")
 
 		// Permissions Policy — disable browser features not used by the IdP.
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
