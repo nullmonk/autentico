@@ -3,184 +3,24 @@
 // autentico seeds at bootstrap (pkg/cli/start.go in the autentico repo),
 // whose redirect_uri is already this origin + /account/callback. Caddy just
 // serves these static files and reverse-proxies /account/api/*, /oauth2/*
-// unmodified - it is not part of the auth flow.
-const OAUTH_CLIENT_ID = 'autentico-account';
-const OAUTH_SCOPE = 'openid profile email offline_access';
-const REDIRECT_URI = window.location.origin + '/account/callback';
-const POST_LOGOUT_REDIRECT_URI = window.location.origin + '/account/';
-const AUTHORIZE_ENDPOINT = '/oauth2/authorize';
-const TOKEN_ENDPOINT = '/oauth2/token';
-const LOGOUT_ENDPOINT = '/oauth2/logout';
+// unmodified - it is not part of the auth flow. The PKCE flow itself lives
+// in /oauth2/static/oidc.js, imported below as an ES module, so every
+// account theme shares one implementation instead of rolling its own.
+import { createAutenticoAuth } from '/oauth2/static/oidc.js';
 
-const SS_ACCESS = 'autentico_access_token';
-const SS_REFRESH = 'autentico_refresh_token';
-const SS_EXPIRES = 'autentico_expires_at';
-const SS_VERIFIER = 'autentico_pkce_verifier';
-const SS_STATE = 'autentico_pkce_state';
-
-function base64UrlEncode(bytes) {
-  let str = '';
-  for (const b of bytes) str += String.fromCharCode(b);
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function randomBase64Url(byteLength) {
-  const bytes = new Uint8Array(byteLength);
-  crypto.getRandomValues(bytes);
-  return base64UrlEncode(bytes);
-}
-
-async function sha256Base64Url(input) {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-  return base64UrlEncode(new Uint8Array(digest));
-}
-
-function storeTokens(tokens) {
-  sessionStorage.setItem(SS_ACCESS, tokens.access_token);
-  sessionStorage.setItem(SS_EXPIRES, String(Date.now() + tokens.expires_in * 1000));
-  if (tokens.refresh_token) sessionStorage.setItem(SS_REFRESH, tokens.refresh_token);
-}
-
-function clearTokens() {
-  sessionStorage.removeItem(SS_ACCESS);
-  sessionStorage.removeItem(SS_REFRESH);
-  sessionStorage.removeItem(SS_EXPIRES);
-  sessionStorage.removeItem(SS_VERIFIER);
-  sessionStorage.removeItem(SS_STATE);
-}
-
-// Returns the cached access token, or null if missing/expired (with a 5s
-// buffer for clock skew between this call and the actual request landing).
-function getStoredAccessToken() {
-  const token = sessionStorage.getItem(SS_ACCESS);
-  const expiresAt = Number(sessionStorage.getItem(SS_EXPIRES) || 0);
-  if (!token || Date.now() >= expiresAt - 5000) return null;
-  return token;
-}
-
-async function beginLogin() {
-  const verifier = randomBase64Url(32);
-  const state = randomBase64Url(16);
-  const challenge = await sha256Base64Url(verifier);
-  sessionStorage.setItem(SS_VERIFIER, verifier);
-  sessionStorage.setItem(SS_STATE, state);
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: OAUTH_CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    scope: OAUTH_SCOPE,
-    state,
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
-  });
-  window.location.assign(`${AUTHORIZE_ENDPOINT}?${params.toString()}`);
-}
-
-async function exchangeCode(code) {
-  const verifier = sessionStorage.getItem(SS_VERIFIER) || '';
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: REDIRECT_URI,
-    client_id: OAUTH_CLIENT_ID,
-    code_verifier: verifier,
-  });
-  const res = await fetch(TOKEN_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
-  if (!res.ok) throw new Error('token exchange failed');
-  storeTokens(await res.json());
-}
-
-async function refreshAccessToken() {
-  const refreshToken = sessionStorage.getItem(SS_REFRESH);
-  if (!refreshToken) return false;
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    refresh_token: refreshToken,
-    client_id: OAUTH_CLIENT_ID,
-  });
-  const res = await fetch(TOKEN_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
-  if (!res.ok) return false;
-  storeTokens(await res.json());
-  return true;
-}
-
-// Runs once at page load: completes the PKCE round trip if we just landed
-// back from /oauth2/authorize (?code=&state=), otherwise reuses a cached
-// token, refreshes it, or redirects to login as a last resort. beginLogin()
-// navigates away, so callers that reach it never get a return value back.
-async function ensureAuthenticated() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-
-  if (code) {
-    const expectedState = sessionStorage.getItem(SS_STATE);
-    const returnedState = params.get('state');
-    window.history.replaceState(null, '', '/account/');
-    if (returnedState && returnedState === expectedState) {
-      try {
-        await exchangeCode(code);
-        sessionStorage.removeItem(SS_VERIFIER);
-        sessionStorage.removeItem(SS_STATE);
-        return getStoredAccessToken();
-      } catch (e) {
-        clearTokens();
-      }
-    }
-  }
-
-  const existing = getStoredAccessToken();
-  if (existing) return existing;
-
-  if (await refreshAccessToken()) return getStoredAccessToken();
-
-  await beginLogin();
-  return null;
-}
-
-// fetch() wrapper for /account/api/* calls: attaches the bearer token,
-// obtaining/refreshing one first if needed, and retries once on a 401
-// (access token expired mid-session) before falling back to a fresh login.
-async function apiFetch(path, options = {}) {
-  let token = getStoredAccessToken();
-  if (!token) token = await ensureAuthenticated();
-
-  const headers = new Headers(options.headers || {});
-  headers.set('Authorization', `Bearer ${token}`);
-  let res = await fetch(path, { ...options, headers });
-
-  if (res.status === 401) {
-    if (await refreshAccessToken()) {
-      headers.set('Authorization', `Bearer ${getStoredAccessToken()}`);
-      res = await fetch(path, { ...options, headers });
-    } else {
-      clearTokens();
-      await beginLogin();
-    }
-  }
-  return res;
-}
-
-function logoutUrl() {
-  const params = new URLSearchParams({
-    client_id: OAUTH_CLIENT_ID,
-    post_logout_redirect_uri: POST_LOGOUT_REDIRECT_URI,
-  });
-  return `${LOGOUT_ENDPOINT}?${params.toString()}`;
-}
+const auth = createAutenticoAuth({
+  clientId: 'autentico-account',
+  scope: 'openid profile email offline_access',
+  oauthPath: '/oauth2',
+  redirectUri: window.location.origin + '/account/callback',
+  postLogoutRedirectUri: window.location.origin + '/account/',
+});
 
 function initLogout() {
   const link = document.getElementById('menu-logout');
   if (!link) return;
-  link.href = logoutUrl();
-  link.addEventListener('click', () => clearTokens());
+  link.href = auth.logoutUrl();
+  link.addEventListener('click', () => auth.clearTokens());
 }
 
 function escapeHtml(str) {
@@ -211,7 +51,7 @@ function renderApplications(apps) {
 async function loadApplications() {
   const list = document.getElementById('apps-list');
   try {
-    const res = await apiFetch('/account/api/applications');
+    const res = await auth.apiFetch('/account/api/applications');
     const json = await res.json();
     if (!res.ok) throw new Error(apiError(json, 'Failed to load applications.'));
     renderApplications(json.data || []);
@@ -222,7 +62,7 @@ async function loadApplications() {
 
 async function loadProfile() {
   try {
-    const res = await apiFetch('/account/api/profile');
+    const res = await auth.apiFetch('/account/api/profile');
     if (!res.ok) return;
     const json = await res.json();
     const user = json.data || {};
@@ -300,7 +140,7 @@ function initPasswordModal(closeGear) {
       return;
     }
     try {
-      const res = await apiFetch('/account/api/password', {
+      const res = await auth.apiFetch('/account/api/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ current_password: current, new_password: next }),
@@ -333,14 +173,14 @@ function initDeleteModal(closeGear) {
     errEl.hidden = true;
     confirmBtn.disabled = true;
     try {
-      const res = await apiFetch('/account/api/deletion-request', {
+      const res = await auth.apiFetch('/account/api/deletion-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
       if (res.status === 204) {
-        clearTokens();
-        window.location.href = logoutUrl();
+        auth.clearTokens();
+        window.location.href = auth.logoutUrl();
         return;
       }
       const json = await res.json().catch(() => ({}));
@@ -364,7 +204,7 @@ const closeGear = initGearMenu();
 initPasswordModal(closeGear);
 initDeleteModal(closeGear);
 initLogout();
-ensureAuthenticated().then(() => {
+auth.ensureAuthenticated().then(() => {
   loadProfile();
   loadApplications();
 });

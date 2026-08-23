@@ -9,8 +9,10 @@
     This page is served as a static file by Caddy's file_server, sitting in
     front of an autentico instance, with /oauth2/* and /account/api/* below
     reverse-proxied to that instance unmodified — see Caddyfile.sample. Auth
-    itself is handled entirely by dashboard.js, which runs its own OAuth PKCE
-    login directly against autentico (Caddy is not part of that flow). If
+    itself is handled by /oauth2/static/oidc.js (the shared PKCE client
+    autentico serves for every account theme), which dashboard.js imports as
+    an ES module and configures to run its own OAuth PKCE login directly
+    against autentico (Caddy is not part of that flow). If
     AUTENTICO_APP_OAUTH_PATH is customized away from the default "/oauth2",
     update the paths in this file and dashboard.js to match.
   -->
@@ -97,7 +99,7 @@
     </div>
   </div>
 
-  <script src="dashboard.js"></script>
+  <script type="module" src="dashboard.js"></script>
 </body>
 
 </html>

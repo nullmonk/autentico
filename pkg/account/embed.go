@@ -72,7 +72,27 @@ func spaHandler(root http.FileSystem) http.Handler {
 		// The fallback page must not be cached so the browser picks up
 		// changes (new asset URLs after a deploy, or an edited override)
 		w.Header().Set("Cache-Control", "no-cache")
-		r.URL.Path = "/account/index.html"
-		http.StripPrefix("/account", fileServer).ServeHTTP(w, r)
+		serveIndex(w, r, root)
 	})
+}
+
+// serveIndex writes index.html directly via http.ServeContent rather than
+// routing through http.FileServer, which special-cases any path ending in
+// "/index.html" with a redirect to "./" — for a request already at
+// "/account/" that resolves right back to itself, an infinite redirect loop.
+func serveIndex(w http.ResponseWriter, r *http.Request, root http.FileSystem) {
+	f, err := root.Open("index.html")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer f.Close()
+
+	stat, err := f.Stat()
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	http.ServeContent(w, r, "index.html", stat.ModTime(), f)
 }

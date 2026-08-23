@@ -113,13 +113,6 @@ body::before {
   content: "_";
   color: var(--color-primary-bg);
   margin-left: 2px;
-  animation: auth-cursor-blink 1.1s steps(1) infinite;
-}
-
-@keyframes auth-cursor-blink {
-  50% {
-    opacity: 0;
-  }
 }
 
 .auth-label::before {
