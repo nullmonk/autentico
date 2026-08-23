@@ -41,6 +41,7 @@ var defaults = map[string]string{
 	"magic_link_enabled":             "false",
 	"magic_link_expiration":          "15m",
 	"audit_log_retention":            "720h",
+	"applications":                   "[]",
 	"smtp_host":                      "",
 	"smtp_port":                      "587",
 	"smtp_username":                  "",
