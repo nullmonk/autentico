@@ -135,7 +135,7 @@ func performAuthCodeFlowWithPKCE(t *testing.T, ts *TestServer, clientID, redirec
 	form.Set("nonce", nonce)
 	form.Set("code_challenge", codeChallenge)
 	form.Set("code_challenge_method", codeChallengeMethod)
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))

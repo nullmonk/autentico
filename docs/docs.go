@@ -6454,6 +6454,9 @@ const docTemplate = `{
                 "profile": {
                     "type": "string"
                 },
+                "require_password_change": {
+                    "type": "boolean"
+                },
                 "role": {
                     "type": "string"
                 },
@@ -6531,6 +6534,9 @@ const docTemplate = `{
                 },
                 "profile": {
                     "type": "string"
+                },
+                "require_password_change": {
+                    "type": "boolean"
                 },
                 "role": {
                     "type": "string"

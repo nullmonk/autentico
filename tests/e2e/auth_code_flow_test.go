@@ -216,7 +216,7 @@ func TestAuthorizationCodeFlow_StatePreserved(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -631,7 +631,7 @@ func TestAuthorizationCodeFlow_InvalidCSRF(t *testing.T) {
 	form.Set("redirect_uri", redirectURI)
 	form.Set("state", "state1")
 	form.Set("client_id", "test-client")
-	form.Set("gorilla.csrf.Token", "invalid-forged-csrf-token")
+	form.Set("csrf_token", "invalid-forged-csrf-token")
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
 	require.NoError(t, err)
@@ -701,7 +701,7 @@ func TestAuthorizationCodeFlow_StateWithSpecialChars(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig2)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))

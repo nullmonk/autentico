@@ -143,7 +143,7 @@ func performAuthorizationCodeFlow(t *testing.T, ts *TestServer, clientID, redire
 	form.Set("client_id", clientID)
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -218,7 +218,7 @@ func performAuthorizationCodeFlowWithScope(t *testing.T, ts *TestServer, clientI
 	form.Set("nonce", nonce)
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -293,7 +293,7 @@ func performAuthorizationCodeFlowWithPKCE(t *testing.T, ts *TestServer, clientID
 	form.Set("nonce", nonce)
 	form.Set("code_challenge", codeChallenge)
 	form.Set("code_challenge_method", codeChallengeMethod)
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	loginReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -357,7 +357,7 @@ func performSignupFlow(t *testing.T, ts *TestServer, username, password, redirec
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig)
 
 	signupReq, err := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))

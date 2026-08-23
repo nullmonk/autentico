@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="{{authURL "/static/auth.css"}}" />
   {{if hasThemeCss}}<link rel="stylesheet" href="{{authURL "/static/theme.css"}}" />{{end}}
   {{block "styles" .}}{{end}}
-  <script nonce="{{.CspNonce}}">try{var t=localStorage.getItem('autentico-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <script nonce="{{.CspNonce}}">try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 
 <body>

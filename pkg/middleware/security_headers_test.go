@@ -12,6 +12,8 @@ import (
 
 func TestSecurityHeadersMiddleware(t *testing.T) {
 	handler := SecurityHeadersMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Server", "TestServer")
+		w.Header().Set("X-Powered-By", "Test")
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -21,6 +23,8 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 
 	assert.Equal(t, "DENY", rr.Header().Get("X-Frame-Options"))
 	assert.Equal(t, "nosniff", rr.Header().Get("X-Content-Type-Options"))
+	assert.Empty(t, rr.Header().Get("Server"))
+	assert.Empty(t, rr.Header().Get("X-Powered-By"))
 	assert.Equal(t, "no-store", rr.Header().Get("Cache-Control"))
 	assert.Equal(t, "no-cache", rr.Header().Get("Pragma"))
 }

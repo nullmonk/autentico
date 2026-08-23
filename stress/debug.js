@@ -24,7 +24,7 @@ export default function () {
   console.log('authorize status:', authPage.status);
 
   const body = authPage.body;
-  const csrfMatch = body.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+  const csrfMatch = body.match(/name="csrf_token"\s+value="([^"]+)"/);
   console.log('csrf regex match:', csrfMatch ? csrfMatch[1].substring(0, 20) + '...' : 'NO MATCH');
 
   if (!csrfMatch) return;
@@ -46,7 +46,7 @@ export default function () {
   console.log('client_id:', cid);
 
   const formData = {
-    'gorilla.csrf.Token': csrfMatch[1],
+    'csrf_token': csrfMatch[1],
     username: USERNAME,
     password: PASSWORD,
     state: state,

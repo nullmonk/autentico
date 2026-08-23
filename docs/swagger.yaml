@@ -1086,6 +1086,8 @@ definitions:
         type: string
       profile:
         type: string
+      require_password_change:
+        type: boolean
       role:
         type: string
       totp_verified:
@@ -1138,6 +1140,8 @@ definitions:
         type: string
       profile:
         type: string
+      require_password_change:
+        type: boolean
       role:
         type: string
       totp_verified:

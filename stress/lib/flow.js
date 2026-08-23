@@ -47,7 +47,7 @@ function generatePKCE() {
 }
 
 function extractCSRF(body) {
-  const match = body.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+  const match = body.match(/name="csrf_token"\s+value="([^"]+)"/);
   return match ? match[1] : null;
 }
 
@@ -105,7 +105,7 @@ export function authFlow() {
     const loginResp = http.post(
       `${BASE_URL}${OAUTH_PATH}/login`,
       {
-        'gorilla.csrf.Token': csrfToken,
+        'csrf_token': csrfToken,
         username:             USERNAME,
         password:             PASSWORD,
         state:                extractFormValue(authPage.body, 'state'),
