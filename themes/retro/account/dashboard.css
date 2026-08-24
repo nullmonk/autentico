@@ -161,11 +161,34 @@
   color: var(--color-muted);
 }
 
+.dash-apps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.dash-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dash-category-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.dash-category-spacer {
+  height: 0.5rem;
+}
+
 .apps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
   gap: 0.75rem;
-  margin-top: 0.75rem;
 }
 
 .app-card {

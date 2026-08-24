@@ -42,23 +42,69 @@ function isIconUrl(icon) {
   return icon.indexOf('/') !== -1;
 }
 
+function renderAppCard(app) {
+  let icon;
+  if (app.icon && isIconUrl(app.icon)) {
+    icon = `<img class="app-icon" src="${escapeHtml(app.icon)}" alt="" />`;
+  } else if (app.icon) {
+    icon = `<i class="app-icon app-icon-font ${escapeHtml(app.icon)}" aria-hidden="true"></i>`;
+  } else {
+    icon = `<span class="app-icon app-icon-placeholder">${escapeHtml((app.name || '?').charAt(0).toUpperCase())}</span>`;
+  }
+  const href = app.url ? escapeHtml(app.url) : '#';
+  return `<a class="app-card" href="${href}" target="_blank" rel="noopener noreferrer">${icon}<span class="app-name">${escapeHtml(app.name)}</span></a>`;
+}
+
 function renderApplications(apps) {
   const list = document.getElementById('apps-list');
   if (!apps || apps.length === 0) {
     list.innerHTML = '<p class="auth-text-muted">No applications available.</p>';
     return;
   }
-  list.innerHTML = apps.map((app) => {
-    let icon;
-    if (app.icon && isIconUrl(app.icon)) {
-      icon = `<img class="app-icon" src="${escapeHtml(app.icon)}" alt="" />`;
-    } else if (app.icon) {
-      icon = `<i class="app-icon app-icon-font ${escapeHtml(app.icon)}" aria-hidden="true"></i>`;
+
+  const blocks = [];
+  let currentStandaloneGroup = [];
+
+  apps.forEach((node, idx) => {
+    if (node.items) {
+      if (currentStandaloneGroup.length > 0) {
+        blocks.push({ type: 'standalone-group', items: currentStandaloneGroup, id: `sg-${idx}` });
+        currentStandaloneGroup = [];
+      }
+      blocks.push({ type: 'category', node, id: `cat-${idx}` });
     } else {
-      icon = `<span class="app-icon app-icon-placeholder">${escapeHtml((app.name || '?').charAt(0).toUpperCase())}</span>`;
+      currentStandaloneGroup.push(node);
     }
-    const href = app.url ? escapeHtml(app.url) : '#';
-    return `<a class="app-card" href="${href}" target="_blank" rel="noopener noreferrer">${icon}<span class="app-name">${escapeHtml(app.name)}</span></a>`;
+  });
+
+  if (currentStandaloneGroup.length > 0) {
+    blocks.push({ type: 'standalone-group', items: currentStandaloneGroup, id: 'sg-last' });
+  }
+
+  list.innerHTML = blocks.map((block) => {
+    if (block.type === 'category') {
+      const node = block.node;
+      const header = node.name
+        ? `<h3 class="dash-category-title">${escapeHtml(node.name)}</h3>`
+        : `<div class="dash-category-spacer"></div>`;
+
+      const itemsHtml = node.items.map(renderAppCard).join('');
+      return `
+        <div class="dash-category">
+          ${header}
+          <div class="apps-grid">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    } else {
+      const itemsHtml = block.items.map(renderAppCard).join('');
+      return `
+        <div class="apps-grid">
+          ${itemsHtml}
+        </div>
+      `;
+    }
   }).join('');
 }
 
