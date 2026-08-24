@@ -3,9 +3,9 @@ package token
 import (
 	"time"
 
+	"github.com/eugenioenko/autentico/pkg/jwtutil"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/eugenioenko/autentico/pkg/jwtutil"
 	"github.com/golang-jwt/jwt/v5"
 )
 

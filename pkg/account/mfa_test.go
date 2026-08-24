@@ -73,7 +73,6 @@ func TestHandleDeleteMfa(t *testing.T) {
 	secret := "JBSWY3DPEHPK3PXP"
 	_, _ = db.GetDB().Exec("UPDATE users SET password = ?, totp_secret = ?, totp_verified = TRUE WHERE id = ?", string(hashedPassword), secret, usr.ID)
 
-
 	code, _ := totp.GenerateCode(secret, time.Now())
 	deleteReq := DisableMfaRequest{CurrentPassword: "password", Code: code}
 	body, _ := json.Marshal(deleteReq)
@@ -88,7 +87,6 @@ func TestHandleDeleteMfa_NoCode(t *testing.T) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	_, _ = db.GetDB().Exec("UPDATE users SET password = ?, totp_secret = 'JBSWY3DPEHPK3PXP', totp_verified = TRUE WHERE id = ?", string(hashedPassword), usr.ID)
 
-
 	deleteReq := DisableMfaRequest{CurrentPassword: "password"}
 	body, _ := json.Marshal(deleteReq)
 	rr := mockAuthRequest(t, string(body), "POST", "/account/mfa/delete", HandleDeleteMfa, info)
@@ -101,7 +99,6 @@ func TestHandleDeleteMfa_InvalidCode(t *testing.T) {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	_, _ = db.GetDB().Exec("UPDATE users SET password = ?, totp_secret = 'JBSWY3DPEHPK3PXP', totp_verified = TRUE WHERE id = ?", string(hashedPassword), usr.ID)
-
 
 	deleteReq := DisableMfaRequest{CurrentPassword: "password", Code: "000000"}
 	body, _ := json.Marshal(deleteReq)
@@ -116,7 +113,6 @@ func TestHandleDeleteMfa_NoPassword(t *testing.T) {
 	// User has no password (passkey-only) but has TOTP
 	secret := "JBSWY3DPEHPK3PXP"
 	_, _ = db.GetDB().Exec("UPDATE users SET password = '', totp_secret = ?, totp_verified = TRUE WHERE id = ?", secret, usr.ID)
-
 
 	code, _ := totp.GenerateCode(secret, time.Now())
 	deleteReq := DisableMfaRequest{Code: code}
@@ -139,7 +135,6 @@ func TestHandleDeleteMfa_WrongPassword(t *testing.T) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	_, _ = db.GetDB().Exec("UPDATE users SET password = ?, totp_secret = 'JBSWY3DPEHPK3PXP', totp_verified = TRUE WHERE id = ?", string(hashedPassword), usr.ID)
 
-
 	req := DisableMfaRequest{CurrentPassword: "wrong"}
 	body, _ := json.Marshal(req)
 	rr := mockAuthRequest(t, string(body), "POST", "/account/api/mfa/delete", HandleDeleteMfa, info)
@@ -152,7 +147,6 @@ func TestHandleDeleteMfa_UniformErrorResponse(t *testing.T) {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	_, _ = db.GetDB().Exec("UPDATE users SET password = ?, totp_secret = 'JBSWY3DPEHPK3PXP', totp_verified = TRUE WHERE id = ?", string(hashedPassword), usr.ID)
-
 
 	cases := []DisableMfaRequest{
 		{CurrentPassword: "wrong", Code: "000000"},
@@ -189,7 +183,6 @@ func TestHandleMfaFlow(t *testing.T) {
 	// Set a valid hashed password for AuthenticateUser to work
 	hashed, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 	_, _ = db.GetDB().Exec("UPDATE users SET password = ? WHERE id = ?", string(hashed), u.ID)
-
 
 	// 1. Get MFA Status
 	rr := mockAuthRequest(t, "", "GET", "/account/api/mfa/status", HandleGetMfaStatus, info)

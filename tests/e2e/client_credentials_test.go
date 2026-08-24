@@ -20,13 +20,13 @@ func createConfidentialClient(t *testing.T, ts *TestServer, adminToken, clientID
 	gt, _ := json.Marshal(grantTypes)
 	body := map[string]interface{}{
 		"client_id":                  clientID,
-		"client_name":               clientID + " Client",
-		"client_secret":             clientSecret,
-		"client_type":               "confidential",
-		"redirect_uris":             []string{"http://localhost:3000/callback"},
-		"grant_types":               json.RawMessage(gt),
-		"response_types":            []string{"code"},
-		"scopes":                    "openid profile email read write",
+		"client_name":                clientID + " Client",
+		"client_secret":              clientSecret,
+		"client_type":                "confidential",
+		"redirect_uris":              []string{"http://localhost:3000/callback"},
+		"grant_types":                json.RawMessage(gt),
+		"response_types":             []string{"code"},
+		"scopes":                     "openid profile email read write",
 		"token_endpoint_auth_method": "client_secret_basic",
 	}
 	bodyJSON, _ := json.Marshal(body)

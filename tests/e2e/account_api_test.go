@@ -67,7 +67,7 @@ func TestAccountAPI_ProfileLifecycle(t *testing.T) {
 
 	// 5. PUT /account/api/profile (Update)
 	updateReq := user.UserUpdateRequest{
-		GivenName: "NewGivenName",
+		GivenName:  "NewGivenName",
 		FamilyName: "NewFamilyName",
 	}
 	updateBody, _ := json.Marshal(updateReq)
