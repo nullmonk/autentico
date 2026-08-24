@@ -85,12 +85,51 @@ export default function ApplicationsPage() {
 
   const handleMove = (parentIndex: number, index: number, direction: 'up' | 'down') => {
     const newApps = JSON.parse(JSON.stringify(apps));
-    const list = parentIndex === -1 ? newApps : newApps[parentIndex].items;
 
-    if (direction === 'up' && index > 0) {
-      [list[index - 1], list[index]] = [list[index], list[index - 1]];
-    } else if (direction === 'down' && index < list.length - 1) {
-      [list[index + 1], list[index]] = [list[index], list[index + 1]];
+    if (direction === 'up') {
+      if (parentIndex !== -1) {
+        if (index === 0) {
+          const item = newApps[parentIndex].items.splice(index, 1)[0];
+          newApps.splice(parentIndex, 0, item);
+        } else {
+          const list = newApps[parentIndex].items;
+          [list[index - 1], list[index]] = [list[index], list[index - 1]];
+        }
+      } else {
+        if (index > 0) {
+          const isCategory = !!newApps[index].items;
+          const isAboveCategory = !!newApps[index - 1].items;
+
+          if (!isCategory && isAboveCategory) {
+            const item = newApps.splice(index, 1)[0];
+            newApps[index - 1].items.push(item);
+          } else {
+            [newApps[index - 1], newApps[index]] = [newApps[index], newApps[index - 1]];
+          }
+        }
+      }
+    } else if (direction === 'down') {
+      if (parentIndex !== -1) {
+        const list = newApps[parentIndex].items;
+        if (index === list.length - 1) {
+          const item = list.splice(index, 1)[0];
+          newApps.splice(parentIndex + 1, 0, item);
+        } else {
+          [list[index + 1], list[index]] = [list[index], list[index + 1]];
+        }
+      } else {
+        if (index < newApps.length - 1) {
+          const isCategory = !!newApps[index].items;
+          const isBelowCategory = !!newApps[index + 1].items;
+
+          if (!isCategory && isBelowCategory) {
+            const item = newApps.splice(index, 1)[0];
+            newApps[index].items.unshift(item);
+          } else {
+            [newApps[index + 1], newApps[index]] = [newApps[index], newApps[index + 1]];
+          }
+        }
+      }
     }
 
     saveMutation.mutate(newApps);
@@ -102,10 +141,17 @@ export default function ApplicationsPage() {
       name: values.name || "",
     };
 
-    let createdNewCatIndex: number | null = null;
     let selectedCatValue = "";
     if (values.categoryId && values.categoryId.length > 0) {
       selectedCatValue = values.categoryId[values.categoryId.length - 1]; // get the last selected/typed tag
+    }
+
+    // Identify if typed tag matches an existing category
+    if (selectedCatValue !== "" && isNaN(parseInt(selectedCatValue, 10))) {
+      const existingIdx = newApps.findIndex((a: any) => a.items && a.name.toLowerCase() === selectedCatValue.toLowerCase());
+      if (existingIdx !== -1) {
+        selectedCatValue = existingIdx.toString();
+      }
     }
 
     if (values.type === "app") {
@@ -113,17 +159,19 @@ export default function ApplicationsPage() {
       newNode.url = values.url;
       newNode.icon = values.icon;
       newNode.groups = values.groups;
-
-      if (selectedCatValue !== "" && isNaN(parseInt(selectedCatValue, 10))) {
-        // Create new category
-        newApps.push({
-          name: selectedCatValue,
-          items: []
-        });
-        createdNewCatIndex = newApps.length - 1;
-      }
     } else {
       newNode.items = editingNode && editingNode.node.items ? editingNode.node.items : [];
+    }
+
+    let targetCategory: ApplicationNode | null = null;
+    let createNewCategoryName: string | null = null;
+
+    if (selectedCatValue !== "") {
+      if (!isNaN(parseInt(selectedCatValue, 10))) {
+        targetCategory = newApps[parseInt(selectedCatValue, 10)];
+      } else {
+        createNewCategoryName = selectedCatValue;
+      }
     }
 
     if (editingNode) {
@@ -133,33 +181,29 @@ export default function ApplicationsPage() {
       } else {
         newApps[editingNode.parentIndex].items.splice(editingNode.index, 1);
       }
+    }
 
-      // Then insert it into the new location
-      if (values.type === "app" && (selectedCatValue !== "" || createdNewCatIndex !== null)) {
-        let targetIdx = createdNewCatIndex !== null ? createdNewCatIndex : parseInt(selectedCatValue, 10);
-
-        if (newApps[targetIdx] && newApps[targetIdx].items) {
-          newApps[targetIdx].items.push(newNode);
-        } else {
-          newApps.push(newNode);
-        }
+    if (values.type === "app") {
+      if (targetCategory) {
+        if (!targetCategory.items) targetCategory.items = [];
+        targetCategory.items.push(newNode);
+      } else if (createNewCategoryName) {
+        newApps.push({
+          name: createNewCategoryName,
+          items: [newNode]
+        });
       } else {
-        // If it's a category, or an app with no category, add it to root
-        // If it was already at root, try to put it back exactly where it was (unless we are reordering)
-        if (editingNode.parentIndex === -1 && (values.type === "category" || selectedCatValue === "")) {
+        if (editingNode && editingNode.parentIndex === -1) {
+          // Put back in its original root slot, adjusted for removal
           newApps.splice(editingNode.index, 0, newNode);
         } else {
           newApps.push(newNode);
         }
       }
     } else {
-      if (selectedCatValue !== "" || createdNewCatIndex !== null) {
-        let targetIdx = createdNewCatIndex !== null ? createdNewCatIndex : parseInt(selectedCatValue, 10);
-        if (newApps[targetIdx] && newApps[targetIdx].items) {
-          newApps[targetIdx].items.push(newNode);
-        } else {
-          newApps.push(newNode);
-        }
+      if (editingNode && editingNode.parentIndex === -1) {
+        // Put back in its original root slot
+        newApps.splice(editingNode.index, 0, newNode);
       } else {
         newApps.push(newNode);
       }
@@ -217,9 +261,16 @@ export default function ApplicationsPage() {
       title: "Actions",
       key: "actions",
       render: (_: any, record: any) => {
-        const listLength = record.parentIndex === -1 ? apps.length : (apps[record.parentIndex]?.items?.length || 0);
-        const canMoveUp = record.index > 0;
-        const canMoveDown = record.index < listLength - 1;
+        let canMoveUp = false;
+        let canMoveDown = false;
+
+        if (record.parentIndex !== -1) {
+          canMoveUp = true; // Can always move up (reorder or escape)
+          canMoveDown = true; // Can always move down (reorder or escape)
+        } else {
+          canMoveUp = record.index > 0;
+          canMoveDown = record.index < apps.length - 1;
+        }
 
         return (
           <Space>
