@@ -52,6 +52,18 @@ function renderAppCard(app) {
     icon = `<span class="app-icon app-icon-placeholder">${escapeHtml((app.name || '?').charAt(0).toUpperCase())}</span>`;
   }
   const href = app.url ? escapeHtml(app.url) : '#';
+
+  if (app.description) {
+    return `
+      <a class="app-card app-card-detailed" href="${href}" target="_blank" rel="noopener noreferrer">
+        ${icon}
+        <div class="app-info">
+          <span class="app-name">${escapeHtml(app.name)}</span>
+          <span class="app-desc">${escapeHtml(app.description)}</span>
+        </div>
+      </a>`;
+  }
+
   return `<a class="app-card" href="${href}" target="_blank" rel="noopener noreferrer">${icon}<span class="app-name">${escapeHtml(app.name)}</span></a>`;
 }
 
