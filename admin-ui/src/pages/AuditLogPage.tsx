@@ -21,8 +21,10 @@ import { useSettings } from "../hooks/useSettings";
 import type { AuditLogEntry } from "../types/audit";
 import type { ListParams } from "../api/users";
 import { useTableScrollY } from "../hooks/useTableScrollY";
+import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 const { Text } = Typography;
 
@@ -119,6 +121,9 @@ export default function AuditLogPage() {
   const [selectedEntry, setSelectedEntry] = useState<AuditLogEntry | null>(
     null
   );
+  const defaultPageSize = useApplyDefaultPageSize((size) =>
+    setListParams((prev) => ({ ...prev, limit: size, offset: 0 }))
+  );
 
   const { data, isLoading, error } = useAuditLogs(listParams);
 
@@ -135,13 +140,13 @@ export default function AuditLogPage() {
         ...prev,
         offset:
           ((pagination.current ?? 1) - 1) *
-          (pagination.pageSize ?? DEFAULT_PAGE_SIZE),
-        limit: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+          (pagination.pageSize ?? defaultPageSize),
+        limit: pagination.pageSize ?? defaultPageSize,
         sort: s.field ? String(s.field) : prev.sort,
         order: s.order === "ascend" ? "asc" : "desc",
       }));
     },
-    []
+    [defaultPageSize]
   );
 
   const handleSearch = useCallback((value: string) => {
@@ -182,7 +187,7 @@ export default function AuditLogPage() {
     []
   );
 
-  const columns: ColumnsType<AuditLogEntry> = [
+  const rawColumns0: ColumnsType<AuditLogEntry> = [
     {
       title: "Event",
       dataIndex: "event",
@@ -277,6 +282,8 @@ export default function AuditLogPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/audit-log', rawColumns0);
+
 
   if (error) return <Alert type="error" message="Failed to load audit logs" />;
 
@@ -335,14 +342,14 @@ export default function AuditLogPage() {
           rowKey="id"
           loading={isLoading}
           onChange={handleTableChange}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={{
             current:
               Math.floor(
                 (listParams.offset ?? 0) /
-                  (listParams.limit ?? DEFAULT_PAGE_SIZE)
+                  (listParams.limit ?? defaultPageSize)
               ) + 1,
-            pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,
+            pageSize: listParams.limit ?? defaultPageSize,
             total: data?.total ?? 0,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS,

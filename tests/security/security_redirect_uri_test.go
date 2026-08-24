@@ -223,4 +223,3 @@ func TestRedirectURI_SpecialPrefixBypass(t *testing.T) {
 		})
 	}
 }
-

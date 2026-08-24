@@ -467,13 +467,13 @@ func TestRun_EmptyTablesNoError(t *testing.T) {
 func TestStart(t *testing.T) {
 	testutils.WithTestDB(t)
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	// Start with a very short interval
 	go Start(ctx, 10*time.Millisecond, 24*time.Hour)
-	
+
 	// Let it run for a bit
 	time.Sleep(50 * time.Millisecond)
-	
+
 	// Cancel and ensure it stops
 	cancel()
 	time.Sleep(20 * time.Millisecond)
@@ -481,10 +481,10 @@ func TestStart(t *testing.T) {
 
 func TestRun_DbError(t *testing.T) {
 	testutils.WithTestDB(t)
-	
+
 	// Close DB to trigger error
 	db.CloseDB()
-	
+
 	// Should not panic, just log errors
 	Run(time.Hour)
 }

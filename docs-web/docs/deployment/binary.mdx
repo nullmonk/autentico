@@ -1,0 +1,63 @@
+---
+title: Binary Deployment
+description: Running Autentico as a standalone binary on Linux or macOS.
+---
+
+
+
+The binary is the simplest deployment option. Autentico has no runtime dependencies beyond the binary itself — no database server to start, no cache to configure, no sidecar processes. The entire system is one executable and one SQLite file. Suitable for VMs, bare metal, or any environment where containers aren't preferred.
+
+## Basic setup
+
+See the [Quickstart](/getting-started/quickstart/) for download, configuration, and first-run instructions.
+
+## Running as a systemd service
+
+Create `/etc/systemd/system/autentico.service`:
+
+```ini
+[Unit]
+Description=Autentico OIDC Identity Provider
+After=network.target
+
+[Service]
+Type=simple
+User=autentico
+WorkingDirectory=/opt/autentico
+ExecStart=/usr/local/bin/autentico start
+EnvironmentFile=/opt/autentico/.env
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now autentico
+sudo systemctl status autentico
+```
+
+## Data directory
+
+Autentico writes one persistent file:
+
+| File | Purpose |
+|---|---|
+| `autentico.db` (path from `AUTENTICO_DB_FILE_PATH`) | SQLite database — all users, clients, sessions, settings |
+
+The RSA private key is passed as the `AUTENTICO_PRIVATE_KEY` environment variable (a base64-encoded PEM string). It is not written to disk. Store it in your secrets manager or `.env` file alongside your other bootstrap secrets.
+
+Back up the database file. Use `sqlite3 .backup` for a hot backup while the server is running.
+
+:::caution
+Never expose the SQLite database file to the public internet. Keep it on a volume accessible only by the `autentico` user. Treat `AUTENTICO_PRIVATE_KEY` as a secret — back it up securely and never commit it to source control.
+
+:::
+
+## Reverse proxy
+
+Autentico listens on HTTP — put it behind a TLS-terminating reverse proxy (nginx, Caddy, Traefik) before exposing it to the internet. See [Reverse Proxy](/deployment/reverse-proxy/).

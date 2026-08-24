@@ -16,6 +16,7 @@ import (
 	"github.com/eugenioenko/autentico/pkg/consent"
 	"github.com/eugenioenko/autentico/pkg/config"
 	"github.com/eugenioenko/autentico/pkg/emailverification"
+	"github.com/eugenioenko/autentico/pkg/forcepasswordchange"
 	"github.com/eugenioenko/autentico/pkg/idpsession"
 	"github.com/eugenioenko/autentico/pkg/mfa"
 	"github.com/eugenioenko/autentico/pkg/reqid"
@@ -150,6 +151,31 @@ func HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 			CodeChallengeMethod: request.CodeChallengeMethod,
 			AuthorizeSig:        authorizeSig,
 		}, "")
+		return
+	}
+
+	if usr.RequirePasswordChange {
+		params := map[string]string{
+			"RedirectURI":         request.RedirectURI,
+			"State":               request.State,
+			"ClientID":            request.ClientID,
+			"Scope":               request.Scope,
+			"Nonce":               request.Nonce,
+			"CodeChallenge":       request.CodeChallenge,
+			"CodeChallengeMethod": request.CodeChallengeMethod,
+		}
+
+		op := forcepasswordchange.OauthParams{
+			RedirectURI: params["RedirectURI"],
+			State:       params["State"],
+			ClientID:    params["ClientID"],
+			Scope:       params["Scope"],
+			Nonce:       params["Nonce"],
+			CodeChallenge: params["CodeChallenge"],
+			CodeChallengeMethod: params["CodeChallengeMethod"],
+		}
+
+		forcepasswordchange.RenderForcePasswordChange(w, r, usr.ID, op, "")
 		return
 	}
 
@@ -300,4 +326,3 @@ func redirectToLogin(w http.ResponseWriter, r *http.Request, req LoginRequest, l
 	redirectURL := config.GetBootstrap().AppOAuthPath + "/authorize?" + params.Encode()
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
-

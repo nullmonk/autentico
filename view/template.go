@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/eugenioenko/autentico/pkg/config"
 	"github.com/eugenioenko/autentico/pkg/cspnonce"
@@ -23,7 +25,8 @@ func ParseTemplate(name string) (*template.Template, error) {
 			return config.GetBootstrap().AppOAuthPath + path
 		},
 		"hasThemeCss": func() bool {
-			return config.Get().ThemeCssResolved != ""
+			_, ok := resolveThemeCSS()
+			return ok
 		},
 		"footerLinks": func() []config.FooterLink {
 			return config.Get().FooterLinks
@@ -32,7 +35,27 @@ func ParseTemplate(name string) (*template.Template, error) {
 			return config.Get().Theme.BrandColor
 		},
 	})
-	return tmpl.ParseFS(FS, "layout.html", name+".html")
+	tmpl, err := tmpl.ParseFS(FS, "layout.html", name+".html")
+	if err != nil {
+		return nil, err
+	}
+
+	templatesDir := config.GetBootstrap().TemplatesDir
+	if templatesDir != "" {
+		for _, tmplName := range []string{"layout", name} {
+			fileName := tmplName + ".html"
+			path := filepath.Join(templatesDir, fileName)
+			content, err := os.ReadFile(path)
+			if err == nil {
+				_, err = tmpl.New(fileName).Parse(string(content))
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return tmpl, nil
 }
 
 // InjectNonce reads the CSP nonce from the request context and adds it to the
@@ -63,23 +86,58 @@ func RenderError(w http.ResponseWriter, r *http.Request, status int, errorMsg st
 	}
 }
 
-// StaticHandler returns an http.Handler that serves files from view/static/.
+// StaticHandler returns an http.Handler that serves files from view/static/,
+// falling back to the embedded default when AUTENTICO_TEMPLATES_DIR is unset
+// or doesn't contain the requested file. Overrides live in a "static"
+// subdirectory of TemplatesDir (e.g. TemplatesDir/static/main.js overrides
+// the embedded view/static/main.js), mirroring the embedded layout so the
+// same mounted directory can override both templates and assets.
 // Mount it with http.StripPrefix so the handler receives bare file names.
 func StaticHandler() http.Handler {
 	sub, err := fs.Sub(FS, "static")
 	if err != nil {
 		panic(err)
 	}
-	return http.FileServer(http.FS(sub))
+	embedded := http.FileServer(http.FS(sub))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if templatesDir := config.GetBootstrap().TemplatesDir; templatesDir != "" {
+			overlay := http.Dir(filepath.Join(templatesDir, "static"))
+			if f, err := overlay.Open(r.URL.Path); err == nil {
+				_ = f.Close()
+				http.FileServer(overlay).ServeHTTP(w, r)
+				return
+			}
+		}
+		embedded.ServeHTTP(w, r)
+	})
 }
 
-// ThemeCSSHandler serves admin-supplied theme CSS (theme_css_inline +
-// theme_css_file content) with text/css content-type. Serving as an external
-// stylesheet — instead of injecting into a page <style> block — eliminates
-// the </style> breakout vector that turned admin-controlled CSS into XSS.
+// resolveThemeCSS returns the effective theme CSS and whether any is set.
+// The admin-configured setting (theme_css_inline / theme_css_file) always
+// wins; when it's empty, TemplatesDir/static/theme.css is used if present.
+// This lets a theme that only needs to tweak colors/fonts/hide an element
+// ship as a single CSS file — no layout.html or auth.css override required —
+// while an admin setting a theme through the UI still overrides it.
+func resolveThemeCSS() (string, bool) {
+	if css := config.Get().ThemeCssResolved; css != "" {
+		return css, true
+	}
+	if templatesDir := config.GetBootstrap().TemplatesDir; templatesDir != "" {
+		if content, err := os.ReadFile(filepath.Join(templatesDir, "static", "theme.css")); err == nil {
+			return string(content), true
+		}
+	}
+	return "", false
+}
+
+// ThemeCSSHandler serves the effective theme CSS (see resolveThemeCSS) with
+// text/css content-type. Serving as an external stylesheet — instead of
+// injecting into a page <style> block — eliminates the </style> breakout
+// vector that turned admin-controlled CSS into XSS.
 func ThemeCSSHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		css := config.Get().ThemeCssResolved
+		css, _ := resolveThemeCSS()
 		sum := sha256.Sum256([]byte(css))
 		etag := `"` + hex.EncodeToString(sum[:8]) + `"`
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")

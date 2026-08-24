@@ -54,9 +54,9 @@ export default function ClientCertificatesPage() {
 
   const handleGenerate = async (values: any) => {
     try {
-      const activeIntermediary = authorities?.items.find((c) => c.type === "intermediary" && !c.revoked_at);
+      const activeIntermediary = authorities?.items.find((c) => c.type === "client-int" && !c.revoked_at);
       if (!activeIntermediary) {
-        message.error("No active intermediary CA found");
+        message.error("No active client intermediary CA found");
         return;
       }
 

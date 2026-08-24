@@ -3,7 +3,7 @@ import { IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-react';
 
 type Mode = '' | 'light' | 'dark';
 
-const STORAGE_KEY = 'autentico-theme';
+const STORAGE_KEY = 'theme';
 
 const options: { value: Mode; icon: React.FC<{ size?: number }>; label: string }[] = [
   { value: '',      icon: IconDeviceDesktop, label: 'Auto' },

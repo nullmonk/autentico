@@ -51,7 +51,7 @@ func TestLogin_TamperedScope(t *testing.T) {
 	form.Set("scope", "openid profile email offline_access") // tampered
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig) // sig was computed for "openid" only
 
 	loginReq, _ := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -102,7 +102,7 @@ func TestLogin_TamperedPKCE(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", "")        // stripped
 	form.Set("code_challenge_method", "") // stripped
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig) // sig was computed with PKCE
 
 	loginReq, _ := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -154,7 +154,7 @@ func TestLogin_TamperedNonce(t *testing.T) {
 	form.Set("nonce", "attacker-injected-nonce") // injected
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig) // sig was computed with empty nonce
 
 	loginReq, _ := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -201,7 +201,7 @@ func TestLogin_MissingSig(t *testing.T) {
 	form.Set("client_id", "test-client")
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	// deliberately omit authorize_sig
 
 	loginReq, _ := http.NewRequest("POST", ts.BaseURL+"/oauth2/login", strings.NewReader(form.Encode()))
@@ -253,7 +253,7 @@ func TestSignup_TamperedScope(t *testing.T) {
 	form.Set("scope", "openid profile email offline_access") // tampered
 	form.Set("code_challenge", testCodeChallenge)
 	form.Set("code_challenge_method", "S256")
-	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("csrf_token", csrfToken)
 	form.Set("authorize_sig", authorizeSig) // computed for "openid"
 
 	signupReq, _ := http.NewRequest("POST", ts.BaseURL+"/oauth2/signup", strings.NewReader(form.Encode()))

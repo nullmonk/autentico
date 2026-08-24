@@ -35,9 +35,11 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const CallbackPage = lazy(() => import("./pages/CallbackPage"));
 const AccessDeniedPage = lazy(() => import("./pages/AccessDeniedPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ApplicationsPage = lazy(() => import("./pages/ApplicationsPage"));
 const ClientsPage = lazy(() => import("./pages/ClientsPage"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 const SessionsPage = lazy(() => import("./pages/SessionsPage"));
+const ApiTokensPage = lazy(() => import("./pages/ApiTokensPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const CorsPage = lazy(() => import("./pages/CorsPage"));
 const FederationPage = lazy(() => import("./pages/FederationPage"));
@@ -46,6 +48,7 @@ const TokensPage = lazy(() => import("./pages/TokensPage"));
 const AuditLogPage = lazy(() => import("./pages/AuditLogPage"));
 const CaPage = lazy(() => import("./pages/ca/CaPage"));
 const ClientCertificatesPage = lazy(() => import("./pages/ca/ClientCertificatesPage"));
+const ServerCertificatesPage = lazy(() => import("./pages/ca/ServerCertificatesPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },
@@ -113,17 +116,20 @@ function ThemedApp() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<AdminLayout />}>
                   <Route index element={<DashboardPage />} />
+                  <Route path="applications" element={<ApplicationsPage />} />
                   <Route path="clients" element={<ClientsPage />} />
                   <Route path="users" element={<UsersPage />} />
                   <Route path="groups" element={<GroupsPage />} />
                   <Route path="sessions" element={<SessionsPage />} />
                   <Route path="tokens" element={<TokensPage />} />
+                  <Route path="api-tokens" element={<ApiTokensPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="cors" element={<CorsPage />} />
                   <Route path="federation" element={<FederationPage />} />
                   <Route path="audit-log" element={<AuditLogPage />} />
                   <Route path="ca" element={<CaPage />} />
                   <Route path="ca-clients" element={<ClientCertificatesPage />} />
+                  <Route path="ca-servers" element={<ServerCertificatesPage />} />
                 </Route>
               </Route>
             </Routes>

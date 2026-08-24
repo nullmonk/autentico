@@ -39,6 +39,7 @@ RUN apt-get update \
 WORKDIR /app/data
 
 COPY --from=builder /app/autentico /usr/local/bin/autentico
+COPY --from=builder /app/themes /app/themes
 
 VOLUME ["/app/data"]
 

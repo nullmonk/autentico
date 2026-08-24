@@ -56,3 +56,6 @@ autentico.db-shm
 autentico.db-wal
 data/
 scripts/.smtp-mail/
+docs-web/build
+docs-web/.docusaurus
+docs-web/node_modules

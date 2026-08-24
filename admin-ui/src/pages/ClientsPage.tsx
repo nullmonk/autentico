@@ -23,9 +23,11 @@ import ClientCreateForm from "../components/clients/ClientCreateForm";
 import ClientEditForm from "../components/clients/ClientEditForm";
 import ClientDetail from "../components/clients/ClientDetail";
 import { useTableScrollY } from "../hooks/useTableScrollY";
+import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import GrantChips from "../components/GrantChips";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 
 export default function ClientsPage() {
@@ -39,6 +41,9 @@ export default function ClientsPage() {
     order: "desc",
   });
   const [searchValue, setSearchValue] = useState("");
+  const defaultPageSize = useApplyDefaultPageSize((size) =>
+    setListParams((prev) => ({ ...prev, limit: size, offset: 0 }))
+  );
 
   const { data, isLoading, error } = useClients(listParams);
   const location = useLocation();
@@ -66,8 +71,8 @@ export default function ClientsPage() {
         ...listParams,
         offset:
           ((pagination.current ?? 1) - 1) *
-          (pagination.pageSize ?? DEFAULT_PAGE_SIZE),
-        limit: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+          (pagination.pageSize ?? defaultPageSize),
+        limit: pagination.pageSize ?? defaultPageSize,
         sort: s.field ? String(s.field) : "created_at",
         order: s.order === "ascend" ? "asc" : "desc",
       };
@@ -86,7 +91,7 @@ export default function ClientsPage() {
 
       setListParams(newParams);
     },
-    [listParams]
+    [listParams, defaultPageSize]
   );
 
   const handleSearch = useCallback((value: string) => {
@@ -97,7 +102,7 @@ export default function ClientsPage() {
     }));
   }, []);
 
-  const columns: ColumnsType<ClientInfoResponse> = [
+  const rawColumns0: ColumnsType<ClientInfoResponse> = [
     {
       title: "Name",
       dataIndex: "client_name",
@@ -193,6 +198,8 @@ export default function ClientsPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/clients', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load clients" />;
@@ -239,14 +246,14 @@ export default function ClientsPage() {
           rowKey="client_id"
           loading={isLoading}
           onChange={handleTableChange}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={{
             current:
               Math.floor(
                 (listParams.offset ?? 0) /
-                  (listParams.limit ?? DEFAULT_PAGE_SIZE)
+                  (listParams.limit ?? defaultPageSize)
               ) + 1,
-            pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,
+            pageSize: listParams.limit ?? defaultPageSize,
             total: data?.total ?? 0,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS,

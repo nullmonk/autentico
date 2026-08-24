@@ -36,9 +36,11 @@ import UserGroupsDrawer from "../components/users/UserGroupsDrawer";
 import UserSessionsDrawer from "../components/users/UserSessionsDrawer";
 import DeletionRequestsTab from "../components/users/DeletionRequestsTab";
 import { useTableScrollY } from "../hooks/useTableScrollY";
+import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
 import CountTooltip from "../components/CountTooltip";
 import CopyText from "../components/CopyText";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function isLocked(record: UserResponseExt): boolean {
   return !!record.locked_until && new Date(record.locked_until) > new Date();
@@ -57,6 +59,9 @@ export default function UsersPage() {
   });
   const [searchValue, setSearchValue] = useState("");
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+  const defaultPageSize = useApplyDefaultPageSize((size) =>
+    setListParams((prev) => ({ ...prev, limit: size, offset: 0 }))
+  );
 
   const { data, isLoading, error } = useUsers(listParams);
   const { data: groups } = useGroups();
@@ -108,8 +113,8 @@ export default function UsersPage() {
       const s = Array.isArray(sorter) ? sorter[0] : sorter;
       const newParams: ListParams = {
         ...listParams,
-        offset: ((pagination.current ?? 1) - 1) * (pagination.pageSize ?? DEFAULT_PAGE_SIZE),
-        limit: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+        offset: ((pagination.current ?? 1) - 1) * (pagination.pageSize ?? defaultPageSize),
+        limit: pagination.pageSize ?? defaultPageSize,
         sort: s.field ? String(s.field) : "created_at",
         order: s.order === "ascend" ? "asc" : "desc",
       };
@@ -140,7 +145,7 @@ export default function UsersPage() {
 
       setListParams(newParams);
     },
-    [listParams]
+    [listParams, defaultPageSize]
   );
 
   const handleSearch = useCallback(
@@ -179,7 +184,7 @@ export default function UsersPage() {
     navigate(key === "users" ? "/users" : `/users?tab=${key}`, { replace: true });
   };
 
-  const columns: ColumnsType<UserResponseExt> = [
+  const rawColumns0: ColumnsType<UserResponseExt> = [
     {
       title: "Username",
       dataIndex: "username",
@@ -328,6 +333,8 @@ export default function UsersPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/users', rawColumns0);
+
 
   if (error) {
     return <Alert type="error" message="Failed to load users" />;
@@ -394,10 +401,10 @@ export default function UsersPage() {
               rowKey="id"
               loading={isLoading}
               onChange={handleTableChange}
-              scroll={scrollY ? { y: scrollY } : undefined}
+              scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
               pagination={{
-                current: Math.floor((listParams.offset ?? 0) / (listParams.limit ?? DEFAULT_PAGE_SIZE)) + 1,
-                pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,
+                current: Math.floor((listParams.offset ?? 0) / (listParams.limit ?? defaultPageSize)) + 1,
+                pageSize: listParams.limit ?? defaultPageSize,
                 total: data?.total ?? 0,
                 showSizeChanger: true,
                 pageSizeOptions: PAGE_SIZE_OPTIONS,

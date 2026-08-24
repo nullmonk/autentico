@@ -107,7 +107,7 @@ describe('Magic Link — enabled', () => {
     // First GET the form to extract CSRF token + cookie
     const getResp = await fetch(magicLinkURL(), { redirect: 'manual' });
     const html = await getResp.text();
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     expect(csrfMatch).toBeTruthy();
     const csrfToken = csrfMatch![1];
 
@@ -115,7 +115,7 @@ describe('Magic Link — enabled', () => {
     const authorizeSig = sigMatch ? sigMatch[1] : '';
 
     const cookies = getResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
     expect(csrfCookie).toBeTruthy();
 
     const resp = await fetch(`${OAUTH_URL}/magic-link`, {
@@ -127,7 +127,7 @@ describe('Magic Link — enabled', () => {
       },
       body: new URLSearchParams({
         email: '',
-        'gorilla.csrf.Token': csrfToken,
+        'csrf_token': csrfToken,
         authorize_sig: authorizeSig,
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,
@@ -145,12 +145,12 @@ describe('Magic Link — enabled', () => {
   it('POST /magic-link with nonexistent email shows sent (no enumeration)', async () => {
     const getResp = await fetch(magicLinkURL(), { redirect: 'manual' });
     const html = await getResp.text();
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     const csrfToken = csrfMatch![1];
     const sigMatch = html.match(/name="authorize_sig"\s+value="([^"]*)"/);
     const authorizeSig = sigMatch ? sigMatch[1] : '';
     const cookies = getResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
 
     const resp = await fetch(`${OAUTH_URL}/magic-link`, {
       method: 'POST',
@@ -161,7 +161,7 @@ describe('Magic Link — enabled', () => {
       },
       body: new URLSearchParams({
         email: 'nobody@nonexistent.com',
-        'gorilla.csrf.Token': csrfToken,
+        'csrf_token': csrfToken,
         authorize_sig: authorizeSig,
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,
@@ -201,10 +201,10 @@ describe('Magic Link — enabled', () => {
   it('POST /magic-link with tampered signature is rejected', async () => {
     const getResp = await fetch(magicLinkURL(), { redirect: 'manual' });
     const html = await getResp.text();
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     const csrfToken = csrfMatch![1];
     const cookies = getResp.headers.getSetCookie();
-    const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+    const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
 
     const resp = await fetch(`${OAUTH_URL}/magic-link`, {
       method: 'POST',
@@ -215,7 +215,7 @@ describe('Magic Link — enabled', () => {
       },
       body: new URLSearchParams({
         email: 'test@test.com',
-        'gorilla.csrf.Token': csrfToken,
+        'csrf_token': csrfToken,
         authorize_sig: 'tampered-signature-value',
         client_id: ADMIN_CLIENT_ID,
         redirect_uri: ADMIN_REDIRECT_URI,

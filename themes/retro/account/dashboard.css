@@ -1,0 +1,330 @@
+/* =========================================================
+   Autentico Dashboard — page-specific styles.
+
+   Loaded alongside the autentico server's own /oauth2/static/auth.css
+   (proxied through Caddy — see Caddyfile.sample), which supplies the
+   theme tokens, fonts, and shared .auth-* component styles this file
+   builds on top of.
+   ========================================================= */
+
+.dash-shell {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 46rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in oklab, var(--color-fg) 25%, transparent);
+  padding: 2rem;
+  background: var(--color-body);
+}
+
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dash-brand .logo {
+  width: 48px;
+  height: 48px;
+}
+
+.dash-brand .auth-title {
+  font-size: 1.25rem;
+}
+
+.dash-welcome {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.dash-gear {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dash-gear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in oklab, var(--color-fg) 25%, transparent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-fg);
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.dash-gear-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dash-gear-btn:hover,
+.dash-gear.open .dash-gear-btn {
+  border-color: var(--color-primary-bg);
+  color: var(--color-primary-bg);
+}
+
+.dash-gear-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 11rem;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid color-mix(in oklab, var(--color-fg) 25%, transparent);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.12s,
+    transform 0.12s,
+    visibility 0.12s;
+  z-index: 20;
+}
+
+.dash-gear.open .dash-gear-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dash-gear:hover .dash-gear-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+}
+
+.dash-gear-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.625rem 0.875rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  letter-spacing: 0.02em;
+  color: var(--color-fg);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dash-gear-item + .dash-gear-item {
+  border-top: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
+}
+
+.dash-gear-item:hover,
+.dash-gear-item:focus-visible {
+  background: color-mix(in oklab, var(--color-primary-bg) 10%, transparent);
+  color: var(--color-primary-bg);
+  outline: none;
+}
+
+.dash-gear-item-danger:hover,
+.dash-gear-item-danger:focus-visible {
+  background: color-mix(in oklab, var(--color-danger-bg) 10%, transparent);
+  color: var(--color-danger-bg);
+}
+
+.dash-banner {
+  margin: 0;
+}
+
+.dash-section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.dash-apps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.dash-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dash-category-spacer {
+  height: 0.5rem;
+}
+
+.apps-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.app-card {
+  display: flex;
+  flex: 1 1 9.5rem;
+  max-width: 14rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-fg) 15%, transparent);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--color-fg);
+  text-align: center;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.app-card-detailed {
+  flex: 1 1 20rem;
+  max-width: 100%;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  gap: 1rem;
+}
+
+.app-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app-desc {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.app-card:hover {
+  border-color: var(--color-primary-bg);
+  background: color-mix(in oklab, var(--color-primary-bg) 6%, transparent);
+}
+
+.app-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+.app-icon-font {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--color-primary-bg);
+}
+
+.app-icon-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, var(--color-primary-bg) 15%, transparent);
+  color: var(--color-primary-bg);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.app-name {
+  font-size: 0.8125rem;
+  word-break: break-word;
+}
+
+.dash-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: color-mix(in oklab, black 70%, transparent);
+}
+
+.dash-modal-backdrop[hidden] {
+  display: none;
+}
+
+.dash-modal {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid color-mix(in oklab, var(--color-fg) 25%, transparent);
+  border-radius: var(--radius);
+  background: var(--color-body);
+  padding: 1.75rem;
+}
+
+.dash-modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-fg);
+}
+
+.dash-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dash-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.dash-modal-actions .auth-btn,
+.dash-modal-actions .auth-btn-secondary {
+  margin-top: 0;
+}
+
+.dash-btn-danger {
+  border-color: var(--color-danger-bg);
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-fg);
+}
+
+@media (hover: hover) {
+  .dash-btn-danger:hover {
+    background-color: transparent;
+    color: var(--color-danger-bg);
+  }
+}
+
+@media (max-width: 30rem) {
+  .dash-shell {
+    padding: 1.5rem 1.25rem;
+  }
+}

@@ -91,7 +91,7 @@ func TestHandleRegisterBegin_UserExists(t *testing.T) {
 func TestHandleRegisterBegin_Success_Extra(t *testing.T) {
 	testutils.WithTestDB(t)
 	withPasskeyConfig(t)
-	
+
 	// User does not exist - should be created automatically
 	username := "brand-new-user"
 
@@ -251,7 +251,7 @@ func TestHandleLoginBegin_WithCreds_CreatesChallenge(t *testing.T) {
 func TestHandleLoginBegin_Success_Extra(t *testing.T) {
 	testutils.WithTestDB(t)
 	withPasskeyConfig(t)
-	
+
 	// Create a user with NO password but WITH a passkey
 	userID := "u1"
 	username := "passkeyuser"

@@ -171,7 +171,7 @@ async function obtainTokenViaAuthCodeInternal(
   const authorizeSig = sigMatch ? sigMatch[1] : '';
 
   const cookies = authorizeResp.headers.getSetCookie();
-  const csrfCookie = cookies.find((c) => c.startsWith('_gorilla_csrf='));
+  const csrfCookie = cookies.find((c) => c.startsWith('csrf_token='));
   if (!csrfCookie) throw new Error('Could not extract CSRF cookie');
 
   // Step 2: POST /login — submit credentials
@@ -185,7 +185,7 @@ async function obtainTokenViaAuthCodeInternal(
     body: new URLSearchParams({
       username,
       password,
-      'gorilla.csrf.Token': csrfToken,
+      'csrf_token': csrfToken,
       authorize_sig: authorizeSig,
       client_id: clientId,
       redirect_uri: redirectUri,

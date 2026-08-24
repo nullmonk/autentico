@@ -364,4 +364,3 @@ func TestListEndpoints_DateRangeSemanticAbuse(t *testing.T) {
 		})
 	}
 }
-

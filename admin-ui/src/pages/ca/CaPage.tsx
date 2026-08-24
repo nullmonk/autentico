@@ -13,11 +13,16 @@ export default function CaPage() {
   });
 
 
-  const activeIntermediary = authorities?.items.find((c) => c.type === "intermediary" && !c.revoked_at);
-  const hasIntermediary = !!activeIntermediary;
+  const clientIntermediary = authorities?.items.find((c) => c.type === "client-int" && !c.revoked_at);
+  const serverIntermediary = authorities?.items.find((c) => c.type === "server-int" && !c.revoked_at);
 
-  const intermediaryExpiringSoon = activeIntermediary?.expire_date &&
-    (new Date(activeIntermediary.expire_date).getTime() - Date.now() < 180 * 24 * 60 * 60 * 1000); // 180 days ~ 6mo
+  const hasIntermediary = !!clientIntermediary || !!serverIntermediary;
+
+  const isExpiringSoon = (cert: any) =>
+    cert?.expire_date && (new Date(cert.expire_date).getTime() - Date.now() < 365 * 24 * 60 * 60 * 1000); // 1 year warning
+
+  const clientExpiringSoon = isExpiringSoon(clientIntermediary);
+  const serverExpiringSoon = isExpiringSoon(serverIntermediary);
 
 
   if (!hasIntermediary) {
@@ -43,10 +48,10 @@ export default function CaPage() {
         </Button>
       </div>
 
-      {intermediaryExpiringSoon && (
+      {(clientExpiringSoon || serverExpiringSoon) && (
         <Card style={{ borderColor: "#faad14", backgroundColor: "#fffbe6" }}>
           <Text type="warning">
-            <StopOutlined /> The intermediary CA is expiring soon.
+            <StopOutlined /> One or more intermediary CAs have less than 1 year remaining.
             Run `autentico ca refresh` in the CLI to generate a new intermediary CA.
           </Text>
         </Card>
@@ -60,10 +65,16 @@ export default function CaPage() {
               <Descriptions.Item label="Root CA Expiration">{rootCa.expire_date ? new Date(rootCa.expire_date).toLocaleString() : "-"}</Descriptions.Item>
             </>
           )}
-          {activeIntermediary && (
+          {clientIntermediary && (
             <>
-              <Descriptions.Item label="Intermediary CA ID"><Text copyable>{activeIntermediary.id}</Text></Descriptions.Item>
-              <Descriptions.Item label="Intermediary CA Expiration">{activeIntermediary.expire_date ? new Date(activeIntermediary.expire_date).toLocaleString() : "-"}</Descriptions.Item>
+              <Descriptions.Item label="Client Intermediary CA ID"><Text copyable>{clientIntermediary.id}</Text></Descriptions.Item>
+              <Descriptions.Item label="Client Intermediary CA Expiration">{clientIntermediary.expire_date ? new Date(clientIntermediary.expire_date).toLocaleString() : "-"}</Descriptions.Item>
+            </>
+          )}
+          {serverIntermediary && (
+            <>
+              <Descriptions.Item label="Server Intermediary CA ID"><Text copyable>{serverIntermediary.id}</Text></Descriptions.Item>
+              <Descriptions.Item label="Server Intermediary CA Expiration">{serverIntermediary.expire_date ? new Date(serverIntermediary.expire_date).toLocaleString() : "-"}</Descriptions.Item>
             </>
           )}
         </Descriptions>

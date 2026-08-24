@@ -25,6 +25,7 @@ type envParams struct {
 	accessSecret  string
 	refreshSecret string
 	csrfSecret    string
+	dbAesKey      string
 	privateKeyB64 string
 	dev           bool
 }
@@ -62,11 +63,16 @@ func buildEnvContent(p envParams) string {
 		"# and the public AUTENTICO_APP_URL port differs from the local bind port.",
 		fmt.Sprintf("AUTENTICO_LISTEN_PORT=%s", p.listenPort),
 		"",
+		"# Directory on the host OS containing HTML templates to override default views.",
+		"# Useful when running in a Docker container to mount custom templates.",
+		"AUTENTICO_TEMPLATES_DIR=",
+		"",
 		"# ── Cryptographic secrets ────────────────────────────────────────────────────",
 		"# Keep these private. Changing them invalidates existing tokens and sessions.",
 		fmt.Sprintf("AUTENTICO_ACCESS_TOKEN_SECRET=%s", p.accessSecret),
 		fmt.Sprintf("AUTENTICO_REFRESH_TOKEN_SECRET=%s", p.refreshSecret),
 		fmt.Sprintf("AUTENTICO_CSRF_SECRET_KEY=%s", p.csrfSecret),
+		fmt.Sprintf("AUTENTICO_DB_AES_KEY=%s", p.dbAesKey),
 		"",
 		"# ── RSA key for JWT signing ──────────────────────────────────────────────────",
 		"# Base64-encoded RSA private key PEM. Used to sign access tokens and ID tokens (RS256).",
@@ -161,6 +167,10 @@ func RunInit(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate refresh token secret: %w", err)
 	}
+	dbAesKey, err := randomHex(32)
+	if err != nil {
+		return fmt.Errorf("failed to generate DB AES key: %w", err)
+	}
 	csrfSecret, err := randomHex(32)
 	if err != nil {
 		return fmt.Errorf("failed to generate CSRF secret: %w", err)
@@ -179,6 +189,7 @@ func RunInit(c *cli.Context) error {
 		accessSecret:  accessSecret,
 		refreshSecret: refreshSecret,
 		csrfSecret:    csrfSecret,
+		dbAesKey:      dbAesKey,
 		privateKeyB64: key.EncodeKeyToBase64(rsaKey),
 		dev:           dev,
 	})
@@ -244,6 +255,10 @@ func autoGenerateConfig(urlFlag string, devFlag bool) error {
 	if err != nil {
 		return fmt.Errorf("auto-setup: failed to generate refresh token secret: %w", err)
 	}
+	dbAesKey, err := randomHex(32)
+	if err != nil {
+		return fmt.Errorf("failed to generate DB AES key: %w", err)
+	}
 	csrfSecret, err := randomHex(32)
 	if err != nil {
 		return fmt.Errorf("auto-setup: failed to generate CSRF secret: %w", err)
@@ -262,6 +277,7 @@ func autoGenerateConfig(urlFlag string, devFlag bool) error {
 		accessSecret:  accessSecret,
 		refreshSecret: refreshSecret,
 		csrfSecret:    csrfSecret,
+		dbAesKey:      dbAesKey,
 		privateKeyB64: key.EncodeKeyToBase64(rsaKey),
 		dev:           dev,
 	})

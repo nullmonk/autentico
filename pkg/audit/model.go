@@ -26,6 +26,7 @@ const (
 	TargetClient   TargetType = "client"
 	TargetSession  TargetType = "session"
 	TargetToken      TargetType = "token"
+	TargetApiToken   TargetType = "api_token"
 	TargetSettings   TargetType = "settings"
 	TargetFederation TargetType = "federation"
 )
@@ -56,6 +57,11 @@ func ActorFromRequest(r *http.Request) Actor {
 	if err != nil {
 		return nil
 	}
+
+	if claims.Role == "api" {
+		return SimpleActor{ID: claims.ID, Username: claims.PreferredUsername}
+	}
+
 	var username string
 	if err := db.GetDB().QueryRow("SELECT username FROM users WHERE id = ?", claims.UserID).Scan(&username); err != nil {
 		slog.Warn("audit: failed to look up username for actor", "error", err, "user_id", claims.UserID)
@@ -93,6 +99,8 @@ const (
 	EventClientCreated          Event = "client_created"
 	EventClientUpdated          Event = "client_updated"
 	EventClientDeleted          Event = "client_deleted"
+	EventApiTokenCreated        Event = "api_token_created"
+	EventApiTokenRevoked        Event = "api_token_revoked"
 	EventSettingsUpdated        Event = "settings_updated"
 	EventSettingsImported       Event = "settings_imported"
 	EventFederationCreated     Event = "federation_created"
@@ -102,6 +110,9 @@ const (
 	EventOtherSessionsRevoked   Event = "other_sessions_revoked"
 	EventTokenRevoked           Event = "token_revoked"
 	EventDeletionApproved      Event = "deletion_approved"
+	EventApplicationCreated    Event = "application_created"
+	EventApplicationUpdated    Event = "application_updated"
+	EventApplicationDeleted    Event = "application_deleted"
 )
 
 // Detail builds a detail map from key-value string pairs.

@@ -88,10 +88,10 @@ func TestCSRFMiddleware(t *testing.T) {
 	// Verify the response
 	assert.Equal(t, http.StatusOK, rr.Code)
 	header := rr.Header().Get("Set-Cookie")
-	assert.Contains(t, header, "_gorilla_csrf")
+	assert.Contains(t, header, "csrf_token")
 }
 
-// TestCSRF_GETSetsCookie verifies that a GET request sets the _gorilla_csrf cookie
+// TestCSRF_GETSetsCookie verifies that a GET request sets the csrf_token cookie
 // and passes through to the inner handler.
 func TestCSRF_GETSetsCookie(t *testing.T) {
 	handler, called, token := setupCSRFMiddleware(t)
@@ -100,15 +100,15 @@ func TestCSRF_GETSetsCookie(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.NotEmpty(t, csrfToken)
 
-	// The _gorilla_csrf cookie must be present.
+	// The csrf_token cookie must be present.
 	var found bool
 	for _, c := range cookies {
-		if c.Name == "_gorilla_csrf" {
+		if c.Name == "csrf_token" {
 			found = true
 			break
 		}
 	}
-	assert.True(t, found, "expected _gorilla_csrf cookie to be set")
+	assert.True(t, found, "expected csrf_token cookie to be set")
 }
 
 // TestCSRF_SafeMethods verifies that GET, HEAD, and OPTIONS pass through
@@ -168,7 +168,7 @@ func TestCSRF_POSTWithValidTokenInHeader(t *testing.T) {
 }
 
 // TestCSRF_POSTWithValidTokenInFormField verifies that a POST with a valid CSRF
-// token supplied via the gorilla.csrf.Token form field succeeds.
+// token supplied via the csrf_token form field succeeds.
 func TestCSRF_POSTWithValidTokenInFormField(t *testing.T) {
 	handler, called, token := setupCSRFMiddleware(t)
 
@@ -179,7 +179,7 @@ func TestCSRF_POSTWithValidTokenInFormField(t *testing.T) {
 	// Use url.Values to properly encode the token (base64 tokens contain +/= chars).
 	*called = false
 	formData := url.Values{}
-	formData.Set("gorilla.csrf.Token", csrfToken)
+	formData.Set("csrf_token", csrfToken)
 	req := plaintextRequest(httptest.NewRequest(http.MethodPost, "/", strings.NewReader(formData.Encode())))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	for _, c := range cookies {

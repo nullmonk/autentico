@@ -1,3 +1,0 @@
-auth.example.com {
-    reverse_proxy autentico:9999
-}

@@ -16,6 +16,9 @@ import {
   Table,
   Tag,
   App,
+  Modal,
+  Row,
+  Col,
 } from "antd";
 import {
   SaveOutlined,
@@ -34,6 +37,88 @@ import RetentionInput from "../components/RetentionInput";
 import { makeTip } from "../lib/tips";
 
 const { Title, Text } = Typography;
+
+const USER_COLUMNS = [
+  { label: "Username", value: "username" },
+  { label: "Email", value: "email" },
+  { label: "Role", value: "role" },
+  { label: "MFA", value: "totp_verified" },
+  { label: "Verified", value: "is_email_verified" },
+  { label: "Status", value: "status" },
+  { label: "Groups", value: "groups" },
+  { label: "Created", value: "created_at" },
+];
+
+const GROUP_COLUMNS = [
+  { label: "Name", value: "name" },
+  { label: "Description", value: "description" },
+  { label: "Members", value: "members" },
+  { label: "Created", value: "created_at" },
+];
+
+const SESSION_COLUMNS = [
+  { label: "Username", value: "username" },
+  { label: "IP Address", value: "ip_address" },
+  { label: "Device", value: "device" },
+  { label: "Provider", value: "provider" },
+  { label: "Created At", value: "created_at" },
+  { label: "Expires At", value: "expires_at" },
+];
+
+const TOKEN_COLUMNS = [
+  { label: "Type", value: "type" },
+  { label: "Client ID", value: "client_id" },
+  { label: "Subject", value: "subject" },
+  { label: "Scopes", value: "scopes" },
+  { label: "Created At", value: "created_at" },
+  { label: "Expires At", value: "expires_at" },
+];
+
+const API_TOKEN_COLUMNS = [
+  { label: "Name", value: "name" },
+  { label: "Scopes", value: "scopes" },
+  { label: "Created At", value: "created_at" },
+  { label: "Expires At", value: "expires_at" },
+  { label: "Last Used At", value: "last_used_at" },
+];
+
+const CLIENT_COLUMNS = [
+  { label: "Client ID", value: "client_id" },
+  { label: "Name", value: "name" },
+  { label: "Type", value: "type" },
+  { label: "Method", value: "token_endpoint_auth_method" },
+  { label: "Status", value: "status" },
+];
+
+const FEDERATION_COLUMNS = [
+  { label: "Name", value: "name" },
+  { label: "Type", value: "type" },
+  { label: "Status", value: "status" },
+];
+
+const AUDIT_LOG_COLUMNS = [
+  { label: "Timestamp", value: "created_at" },
+  { label: "Event", value: "event" },
+  { label: "Actor", value: "actor" },
+  { label: "IP Address", value: "ip_address" },
+  { label: "Status", value: "status" },
+];
+
+const CLIENT_CERTIFICATES_COLUMNS = [
+  { label: "Serial Number", value: "serial_number" },
+  { label: "Common Name", value: "common_name" },
+  { label: "Valid From", value: "not_before" },
+  { label: "Valid Until", value: "not_after" },
+  { label: "Status", value: "status" },
+];
+
+const SERVER_CERTIFICATES_COLUMNS = [
+  { label: "Serial Number", value: "serial_number" },
+  { label: "Common Name", value: "common_name" },
+  { label: "Valid From", value: "not_before" },
+  { label: "Valid Until", value: "not_after" },
+  { label: "Status", value: "status" },
+];
 
 const boolProp = (value: unknown) => ({ checked: value === true || value === "true" });
 
@@ -117,11 +202,190 @@ const tip = makeTip({
   passkey_login_mode: "How passkeys are presented on the login page. Username First: user enters username first. Discoverable: button triggers usernameless login. Conditional: browser auto-surfaces passkeys via autofill. Passkey Only: no username field, only passkey login.",
   magic_link_enabled: "Allow users to sign in via a magic link sent to their email, without entering a password. Requires SMTP.",
   magic_link_expiration: "How long a magic link remains valid (e.g. 15m, 30m).",
+  default_page_size: "Default number of rows shown per page in admin UI tables (users, clients, groups, etc.).",
 }, "https://autentico.top/configuration/runtime-settings");
 
 interface FooterLink {
   label: string;
   url: string;
+}
+
+const COLUMNS_BY_PAGE: Record<string, { label: string; value: string }[]> = {
+  "/users": USER_COLUMNS,
+  "/groups": GROUP_COLUMNS,
+  "/sessions": SESSION_COLUMNS,
+  "/tokens": TOKEN_COLUMNS,
+  "/api-tokens": API_TOKEN_COLUMNS,
+  "/clients": CLIENT_COLUMNS,
+  "/federation": FEDERATION_COLUMNS,
+  "/audit-log": AUDIT_LOG_COLUMNS,
+  "/ca-clients": CLIENT_CERTIFICATES_COLUMNS,
+  "/ca-servers": SERVER_CERTIFICATES_COLUMNS,
+};
+
+function HiddenColumnsEditor({ value, onChange }: { value?: string; onChange?: (v: string) => void }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<string>("/users");
+
+  const hiddenColumns: Record<string, string[]> = (() => {
+    try { return JSON.parse(value || "{}"); } catch { return {}; }
+  })();
+
+  const update = (next: Record<string, string[]>) => onChange?.(JSON.stringify(next, null, 2));
+
+  const handleCheckboxChange = (page: string, column: string, checked: boolean) => {
+    const next = { ...hiddenColumns };
+    if (!next[page]) next[page] = [];
+
+    if (checked) {
+      if (!next[page].includes(column)) {
+        next[page].push(column);
+      }
+    } else {
+      next[page] = next[page].filter(c => c !== column);
+      if (next[page].length === 0) {
+        delete next[page];
+      }
+    }
+    update(next);
+  };
+
+  const handleSelectAll = (page: string, columns: {value: string}[]) => {
+    const next = { ...hiddenColumns };
+    // Only add predefined columns without touching the custom ones
+    const existing = next[page] || [];
+    const custom = existing.filter(c => !columns.find(col => col.value === c));
+    next[page] = [...new Set([...columns.map(c => c.value), ...custom])];
+    update(next);
+  };
+
+  const handleClearAllPredefined = (page: string, columns: {value: string}[]) => {
+    const next = { ...hiddenColumns };
+    if (next[page]) {
+      next[page] = next[page].filter(c => !columns.find(col => col.value === c));
+      if (next[page].length === 0) delete next[page];
+    }
+    update(next);
+  };
+
+  const handleCustomChange = (page: string, values: string[]) => {
+    const next = { ...hiddenColumns };
+    const predefined = selectedPageColumns.map(c => c.value);
+    const existingPredefined = (next[page] || []).filter(c => predefined.includes(c));
+
+    const newValues = [...existingPredefined, ...values];
+    if (newValues.length > 0) {
+        next[page] = newValues;
+    } else {
+        delete next[page];
+    }
+    update(next);
+  };
+
+  const selectedPageColumns = COLUMNS_BY_PAGE[selectedPage] || [];
+  const selectedPageHidden = hiddenColumns[selectedPage] || [];
+  const customHidden = selectedPageHidden.filter(h => !selectedPageColumns.find(c => c.value === h));
+
+  return (
+    <>
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Input.TextArea
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          rows={6}
+          placeholder='{
+  "/users": ["email", "created_at"]
+}'
+          style={{ fontFamily: "monospace" }}
+        />
+        <Button onClick={() => setIsModalOpen(true)}>Advanced UI Editor</Button>
+      </Space>
+
+      <Modal
+        title="Edit Hidden Columns"
+        open={isModalOpen}
+        onOk={() => setIsModalOpen(false)}
+        onCancel={() => setIsModalOpen(false)}
+        width={600}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setIsModalOpen(false)}>
+            Close
+          </Button>
+        ]}
+      >
+        <Space direction="vertical" style={{ width: "100%", marginTop: 16 }}>
+          <Select
+            style={{ width: "100%" }}
+            value={selectedPage}
+            onChange={setSelectedPage}
+            options={[
+              { label: "Users", value: "/users" },
+              { label: "Groups", value: "/groups" },
+              { label: "Sessions", value: "/sessions" },
+              { label: "Tokens", value: "/tokens" },
+              { label: "API Tokens", value: "/api-tokens" },
+              { label: "Clients", value: "/clients" },
+              { label: "Federation", value: "/federation" },
+              { label: "Audit Log", value: "/audit-log" },
+              { label: "Client Certificates", value: "/ca-clients" },
+              { label: "Server Certificates", value: "/ca-servers" },
+            ]}
+          />
+
+          {selectedPageColumns.length > 0 ? (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text strong>Columns to hide on {selectedPage}</Text>
+                <Space>
+                  <Button size="small" onClick={() => handleSelectAll(selectedPage, selectedPageColumns)}>Select All</Button>
+                  <Button size="small" onClick={() => handleClearAllPredefined(selectedPage, selectedPageColumns)}>Clear All</Button>
+                </Space>
+              </div>
+              <Row gutter={[16, 16]}>
+                {selectedPageColumns.map(col => (
+                  <Col span={12} key={col.value}>
+                    <Checkbox
+                      checked={selectedPageHidden.includes(col.value)}
+                      onChange={(e) => handleCheckboxChange(selectedPage, col.value, e.target.checked)}
+                    >
+                      {col.label} ({col.value})
+                    </Checkbox>
+                  </Col>
+                ))}
+              </Row>
+
+              <div style={{ marginTop: 24 }}>
+                <Text strong>Other Columns (Custom Match)</Text>
+                <div style={{ marginTop: 8 }}>
+                  <Select
+                    mode="tags"
+                    style={{ width: '100%' }}
+                    placeholder="Type a column ID or Title to hide and press Enter"
+                    value={customHidden}
+                    onChange={(values) => handleCustomChange(selectedPage, values)}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 16 }}>
+              <Alert message="No known columns configured for this page. You can still add custom matches." type="info" showIcon style={{ marginBottom: 16 }} />
+              <Text strong>Other Columns (Custom Match)</Text>
+              <div style={{ marginTop: 8 }}>
+                <Select
+                  mode="tags"
+                  style={{ width: '100%' }}
+                  placeholder="Type a column ID or Title to hide and press Enter"
+                  value={customHidden}
+                  onChange={(values) => handleCustomChange(selectedPage, values)}
+                />
+              </div>
+            </div>
+          )}
+        </Space>
+      </Modal>
+    </>
+  );
 }
 
 function FooterLinksEditor({ value, onChange }: { value?: string; onChange?: (v: string) => void }) {
@@ -169,6 +433,17 @@ export default function SettingsPage() {
   const updateSettings = useUpdateSettings();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
+
+  let hiddenSettingsTabs: string[] = [];
+  try {
+    if (settings?.admin_ui_hidden_settings) {
+      hiddenSettingsTabs = typeof settings.admin_ui_hidden_settings === "string"
+        ? JSON.parse(settings.admin_ui_hidden_settings)
+        : settings.admin_ui_hidden_settings;
+    }
+  } catch (e) {
+    console.error("Failed to parse admin_ui_hidden_settings", e);
+  }
   const pkceEnforced = Form.useWatch("pkce_enforce_s256", form);
   const mfaMethod = Form.useWatch("mfa_method", form);
   const smtpHost = Form.useWatch("smtp_host", form);
@@ -293,7 +568,18 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      form.setFieldsValue(settings);
+      const formattedSettings = { ...settings };
+      try {
+        if (typeof formattedSettings.admin_ui_hidden_pages === "string") {
+          formattedSettings.admin_ui_hidden_pages = JSON.parse(formattedSettings.admin_ui_hidden_pages);
+        }
+        if (typeof formattedSettings.admin_ui_hidden_settings === "string") {
+          formattedSettings.admin_ui_hidden_settings = JSON.parse(formattedSettings.admin_ui_hidden_settings);
+        }
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+      form.setFieldsValue(formattedSettings);
     }
   }, [settings, form]);
 
@@ -302,7 +588,9 @@ export default function SettingsPage() {
       // Convert booleans to strings if they are switches
       const processed: Record<string, string> = {};
       Object.entries(values).forEach(([k, v]) => {
-        if (v === true) processed[k] = "true";
+        if (k === "admin_ui_hidden_pages" || k === "admin_ui_hidden_settings") {
+          processed[k] = JSON.stringify(v || []);
+        } else if (v === true) processed[k] = "true";
         else if (v === false) processed[k] = "false";
         else if (v !== undefined && v !== null) processed[k] = String(v);
       });
@@ -1010,6 +1298,73 @@ export default function SettingsPage() {
               ),
             },
             {
+              key: "9",
+              label: "Admin UI",
+              children: (
+                <TabContent>
+                  <Form.Item
+                    label="Hidden Pages"
+                    name="admin_ui_hidden_pages"
+                    tooltip="Select pages to hide from the navigation menu."
+                  >
+                    <Select
+                      mode="multiple"
+                      placeholder="Select pages to hide"
+                      options={[
+                        { label: "Users", value: "/users" },
+                        { label: "Groups", value: "/groups" },
+                        { label: "Sessions", value: "/sessions" },
+                        { label: "Tokens", value: "/tokens" },
+                        { label: "API Tokens", value: "/api-tokens" },
+                        { label: "Clients", value: "/clients" },
+                        { label: "Federation", value: "/federation" },
+                        { label: "Audit Log", value: "/audit-log" },
+                        { label: "CORS", value: "/cors" },
+                        { label: "Certificates / CA", value: "/ca" },
+                        { label: "Client Certificates", value: "/ca-clients" },
+                        { label: "Server Certificates", value: "/ca-servers" },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="Hidden Settings Tabs"
+                    name="admin_ui_hidden_settings"
+                    tooltip="Select settings tabs to hide from this page."
+                  >
+                    <Select
+                      mode="multiple"
+                      placeholder="Select tabs to hide"
+                      options={[
+                        { label: "Login & Registration", value: "1" },
+                        { label: "MFA & Trusted Devices", value: "2" },
+                        { label: "Sessions & Tokens", value: "3" },
+                        { label: "Security", value: "4" },
+                        { label: "SMTP", value: "5" },
+                        { label: "Profile Fields", value: "6" },
+                        { label: "Branding", value: "7" },
+                        { label: "Backup", value: "8" },
+                        { label: "Admin UI", value: "9" },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="Hidden Columns"
+                    name="admin_ui_hidden_columns"
+                    tooltip={{ title: "JSON object mapping page paths to arrays of column keys to hide.", icon: <ExclamationCircleOutlined /> }}
+                  >
+                    <HiddenColumnsEditor />
+                  </Form.Item>
+                  <Form.Item
+                    label="Default Page Size"
+                    name="default_page_size"
+                    tooltip={{ title: tip("default_page_size"), icon: <ExclamationCircleOutlined /> }}
+                  >
+                    <InputNumber min={1} max={1000} />
+                  </Form.Item>
+                </TabContent>
+              ),
+            },
+            {
               key: "8",
               label: "Backup",
               children: (
@@ -1154,7 +1509,7 @@ export default function SettingsPage() {
                 </TabContent>
               ),
             },
-          ]}
+          ].filter(tab => !hiddenSettingsTabs.includes(tab.key))}
         />
 
     </Space>

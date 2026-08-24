@@ -1,0 +1,11 @@
+--- admin-ui/src/pages/ApplicationsPage.tsx
++++ admin-ui/src/pages/ApplicationsPage.tsx
+@@ -107,6 +107,8 @@
+     const newNode: ApplicationNode = {
+       name: values.name || "",
+     };
++
++    let createdNewCatIndex: number | null = null;
+
+     if (values.type === "app") {
+       newNode.description = values.description;

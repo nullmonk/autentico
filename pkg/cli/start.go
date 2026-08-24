@@ -17,6 +17,8 @@ import (
 	"github.com/eugenioenko/autentico/docs"
 	"github.com/eugenioenko/autentico/pkg/account"
 	"github.com/eugenioenko/autentico/pkg/admin"
+	"github.com/eugenioenko/autentico/pkg/apitoken"
+	"github.com/eugenioenko/autentico/pkg/application"
 	"github.com/eugenioenko/autentico/pkg/appsettings"
 	"github.com/eugenioenko/autentico/pkg/audit"
 	"github.com/eugenioenko/autentico/pkg/authorize"
@@ -31,6 +33,7 @@ import (
 	"github.com/eugenioenko/autentico/pkg/devicecode"
 	"github.com/eugenioenko/autentico/pkg/emailverification"
 	"github.com/eugenioenko/autentico/pkg/federation"
+	"github.com/eugenioenko/autentico/pkg/forcepasswordchange"
 	"github.com/eugenioenko/autentico/pkg/group"
 	"github.com/eugenioenko/autentico/pkg/health"
 	"github.com/eugenioenko/autentico/pkg/idpsession"
@@ -156,6 +159,7 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("POST "+oauth+"/magic-link/verify", rateLimited(csrfProtected(magiclink.HandleMagicLinkVerifyCode)))
 	mux.Handle(oauth+"/forgot-password", rateLimited(csrfProtected(passwordreset.HandleForgotPassword)))
 	mux.Handle(oauth+"/reset-password", rateLimited(csrfProtected(passwordreset.HandleResetPassword)))
+	mux.Handle(oauth+"/force-password-change", rateLimited(csrfProtected(forcepasswordchange.HandleForcePasswordChange)))
 	mux.HandleFunc("GET "+oauth+"/federation/{id}", federation.HandleFederationBegin)
 	mux.HandleFunc("GET "+oauth+"/federation/{id}/callback", federation.HandleFederationCallback)
 	mux.Handle(oauth+"/signup", csrfProtected(signup.HandleSignup))
@@ -198,6 +202,8 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("GET /admin/api/users/{id}/idp-sessions", adminAPI(idpsession.HandleListUserIdpSessions))
 	mux.Handle("GET /admin/api/idp-sessions/{id}/sessions", adminAPI(session.HandleListIdpSessionSessions))
 	mux.Handle("DELETE /admin/api/idp-sessions/{id}", adminAPI(idpsession.HandleForceLogoutIdpSession))
+	mux.Handle("GET /admin/api/applications", adminAPI(application.HandleGetSettingsApplications))
+	mux.Handle("PUT /admin/api/applications", adminAPI(application.HandleUpdateSettingsApplications))
 	mux.Handle("GET /admin/api/federation", adminAPI(federation.HandleListProviders))
 	mux.Handle("POST /admin/api/federation", adminAPI(federation.HandleCreateProvider))
 	mux.Handle("GET /admin/api/federation/{id}", adminAPI(federation.HandleGetProvider))
@@ -214,6 +220,12 @@ func RunStart(c *cli.Context) error {
 	mux.Handle("GET /admin/api/users/{id}/groups", adminAPI(group.HandleGetUserGroups))
 	mux.Handle("GET /admin/api/tokens", adminAPI(token.HandleListTokens))
 	mux.Handle("DELETE /admin/api/tokens/{id}", adminAPI(token.HandleRevokeToken))
+
+	mux.Handle("POST /admin/api/api-tokens", adminAPI(apitoken.HandleCreateApiToken))
+	mux.Handle("GET /admin/api/api-tokens", adminAPI(apitoken.HandleListApiTokens))
+	mux.Handle("DELETE /admin/api/api-tokens/{id}", adminAPI(apitoken.HandleRevokeApiToken))
+	mux.Handle("GET /admin/api/api-tokens/routes", adminAPI(apitoken.HandleListAvailableRoutes))
+
 	mux.Handle("GET /admin/api/stats", adminAPI(admin.HandleStats))
 	mux.Handle("GET /admin/api/settings", adminAPI(appsettings.HandleGetSettings))
 	mux.Handle("PUT /admin/api/settings", adminAPI(appsettings.HandlePutSettings))
@@ -228,15 +240,18 @@ func RunStart(c *cli.Context) error {
 
 	mux.Handle("GET /admin/api/certificates", adminAPI(ca.HandleListCertificates))
 	mux.Handle("POST /admin/api/certificates", adminAPI(ca.HandleGenerateUserCert))
+	mux.Handle("POST /admin/api/certificates/server", adminAPI(ca.HandleGenerateServerCert))
 	mux.Handle("GET /admin/api/certificates/authorities", adminAPI(ca.HandleListAuthorities))
 	mux.Handle("GET /admin/api/certificates/{id}/bundle", adminAPI(ca.HandleDownloadUserCert))
 	mux.Handle("DELETE /admin/api/certificates/{id}", adminAPI(ca.HandleRevokeCertificate))
+	mux.Handle("POST /admin/api/ca/server", adminAPI(ca.HandleGenerateServerCertFromCSR))
 
 	mux.Handle("GET /ca.crt", http.HandlerFunc(ca.HandleGetCAChain))
 
 	// -------------------------------------------------------------------------
 	// Account self-service API (audience: autentico-account or autentico-admin)
 	// -------------------------------------------------------------------------
+	mux.Handle("GET /account/api/applications", accountAPI(application.HandleListUserApplications))
 	mux.Handle("GET /account/api/profile", accountAPI(account.HandleGetProfile))
 	mux.Handle("PUT /account/api/profile", accountAPI(account.HandleUpdateProfile))
 	mux.Handle("POST /account/api/password", rateLimited(middleware.AccountAuthMiddleware(http.HandlerFunc(account.HandleUpdatePassword))))

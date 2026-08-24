@@ -117,4 +117,3 @@ func HandleDeviceAuthorization(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Pragma", "no-cache")
 	utils.WriteApiResponse(w, resp, http.StatusOK)
 }
-

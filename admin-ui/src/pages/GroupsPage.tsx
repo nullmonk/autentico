@@ -36,7 +36,9 @@ import { useUsers } from "../hooks/useUsers";
 import type { ListParams } from "../api/users";
 import type { Group, GroupMember } from "../types/group";
 import { useTableScrollY } from "../hooks/useTableScrollY";
+import { useApplyDefaultPageSize } from "../hooks/useDefaultPageSize";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../constants/table";
+import { useHiddenColumns } from "../hooks/useHiddenColumns";
 
 function GroupMembersView({
   group,
@@ -119,7 +121,7 @@ function GroupMembersView({
     return { id, label: user ? user.username : id };
   });
 
-  const columns: ColumnsType<GroupMember> = [
+  const rawColumns0: ColumnsType<GroupMember> = [
     { title: "Username", dataIndex: "username", key: "username" },
     { title: "Email", dataIndex: "email", key: "email" },
     {
@@ -149,6 +151,8 @@ function GroupMembersView({
       ),
     },
   ];
+  const columns = useHiddenColumns('/groups', rawColumns0);
+
 
   return (
     <>
@@ -214,7 +218,7 @@ function GroupMembersView({
           dataSource={members ?? []}
           rowKey="user_id"
           loading={isLoading}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={false}
           size="small"
         />
@@ -235,6 +239,9 @@ export default function GroupsPage() {
     order: "asc",
   });
   const [searchValue, setSearchValue] = useState("");
+  const defaultPageSize = useApplyDefaultPageSize((size) =>
+    setListParams((prev) => ({ ...prev, limit: size, offset: 0 }))
+  );
 
   const { data, isLoading, error } = useGroups(listParams);
   const createGroup = useCreateGroup();
@@ -289,13 +296,13 @@ export default function GroupsPage() {
       const s = Array.isArray(sorter) ? sorter[0] : sorter;
       setListParams((prev) => ({
         ...prev,
-        offset: ((pagination.current ?? 1) - 1) * (pagination.pageSize ?? DEFAULT_PAGE_SIZE),
-        limit: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+        offset: ((pagination.current ?? 1) - 1) * (pagination.pageSize ?? defaultPageSize),
+        limit: pagination.pageSize ?? defaultPageSize,
         sort: s.field ? String(s.field) : "name",
         order: s.order === "descend" ? "desc" : "asc",
       }));
     },
-    []
+    [defaultPageSize]
   );
 
   const handleSearch = useCallback((value: string) => {
@@ -306,16 +313,7 @@ export default function GroupsPage() {
     }));
   }, []);
 
-  if (membersGroup) {
-    return (
-      <GroupMembersView
-        group={membersGroup}
-        onBack={() => setMembersGroup(null)}
-      />
-    );
-  }
-
-  const columns: ColumnsType<Group> = [
+  const rawColumns1: ColumnsType<Group> = [
     {
       title: "Name",
       dataIndex: "name",
@@ -383,6 +381,16 @@ export default function GroupsPage() {
       ),
     },
   ];
+  const columns = useHiddenColumns('/groups', rawColumns1);
+
+  if (membersGroup) {
+    return (
+      <GroupMembersView
+        group={membersGroup}
+        onBack={() => setMembersGroup(null)}
+      />
+    );
+  }
 
   if (error) {
     return <Alert type="error" message="Failed to load groups" />;
@@ -420,10 +428,10 @@ export default function GroupsPage() {
           rowKey="id"
           loading={isLoading}
           onChange={handleTableChange}
-          scroll={scrollY ? { y: scrollY } : undefined}
+          scroll={{ x: 'max-content', y: scrollY ? scrollY : undefined }}
           pagination={{
-            current: Math.floor((listParams.offset ?? 0) / (listParams.limit ?? DEFAULT_PAGE_SIZE)) + 1,
-            pageSize: listParams.limit ?? DEFAULT_PAGE_SIZE,
+            current: Math.floor((listParams.offset ?? 0) / (listParams.limit ?? defaultPageSize)) + 1,
+            pageSize: listParams.limit ?? defaultPageSize,
             total: data?.total ?? 0,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS,

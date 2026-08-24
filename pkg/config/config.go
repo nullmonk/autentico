@@ -18,9 +18,9 @@ const (
 // variables at startup. AppDomain, AppHost, AppPort, and AppAuthIssuer are derived
 // from AppURL and AppOAuthPath — they are not read from env vars directly.
 type BootstrapConfig struct {
-	DbFilePath    string
-	AppURL        string // AUTENTICO_APP_URL
-	AppOAuthPath  string // AUTENTICO_APP_OAUTH_PATH
+	DbFilePath   string
+	AppURL       string // AUTENTICO_APP_URL
+	AppOAuthPath string // AUTENTICO_APP_OAUTH_PATH
 	// Derived from AppURL — not set by env vars
 	AppDomain     string
 	AppHost       string
@@ -31,24 +31,26 @@ type BootstrapConfig struct {
 	// a reverse proxy handles TLS and the public URL differs from the
 	// local listen port.
 	AppListenPort string
+	// TemplatesDir allows overriding default templates when running in Docker or similar
+	TemplatesDir string // AUTENTICO_TEMPLATES_DIR
 	// Secrets and cookies
-	AuthAccessTokenSecret          string
-	AuthRefreshTokenSecret         string
-	AuthCSRFProtectionSecretKey    string
-	DbAesKey                       string
-	AuthCSRFSecureCookie           bool
-	AuthJwkCertKeyID               string
-	AuthRefreshTokenCookieName string
-	AuthRefreshTokenCookieOnly bool
-	AuthIdpSessionCookieName       string
-	AuthIdpSessionSecureCookie     bool
+	AuthAccessTokenSecret       string
+	AuthRefreshTokenSecret      string
+	AuthCSRFProtectionSecretKey string
+	DbAesKey                    string
+	AuthCSRFSecureCookie        bool
+	AuthJwkCertKeyID            string
+	AuthRefreshTokenCookieName  string
+	AuthRefreshTokenCookieOnly  bool
+	AuthIdpSessionCookieName    string
+	AuthIdpSessionSecureCookie  bool
 	// Private key (base64-encoded PEM). If empty, an ephemeral key is used.
 	PrivateKeyBase64 string
 	// Rate limiting (per-IP, applied to auth endpoints). RPS <= 0 disables.
-	RateLimitRPS       float64
-	RateLimitBurst     int
-	RateLimitRPM       float64
-	RateLimitRPMBurst  int
+	RateLimitRPS      float64
+	RateLimitBurst    int
+	RateLimitRPM      float64
+	RateLimitRPMBurst int
 	// Anti-timing delay (ms) added to auth responses to prevent user enumeration.
 	// Both set to 0 disables the delay.
 	AntiTimingMinMs int
@@ -128,7 +130,7 @@ type Config struct {
 	ValidationMaxPasswordLength        int
 	Theme                              ThemeConfig
 	ThemeCssResolved                   string
-	FooterLinks []FooterLink
+	FooterLinks                        []FooterLink
 	// When true, users can delete their own account immediately without admin approval.
 	AllowSelfServiceDeletion bool
 	// When false (default), users cannot change their own username via the account portal.
@@ -136,9 +138,9 @@ type Config struct {
 	// When false (default), users cannot change their own email via the account portal.
 	AllowEmailChange bool
 	// Device Authorization Grant (RFC 8628)
-	DeviceCodeExpiration        time.Duration
-	DeviceCodeExpirationStr     string
-	DeviceCodePollingInterval   int
+	DeviceCodeExpiration      time.Duration
+	DeviceCodeExpirationStr   string
+	DeviceCodePollingInterval int
 	// CORS: parsed from the "cors_allowed_origins" runtime setting.
 	CORSAllowedOrigins []string
 	CORSAllowAll       bool
@@ -160,6 +162,12 @@ type Config struct {
 	ProfileFieldProfileURL string
 	ProfileFieldLocale     string
 	ProfileFieldAddress    string
+
+	// Admin UI
+	AdminUIHiddenPages     []string
+	AdminUIHiddenSettings  []string
+	AdminUIHiddenColumns   string // JSON string
+	AdminUIDefaultPageSize int
 }
 
 var defaultConfig = Config{
@@ -205,9 +213,9 @@ var defaultConfig = Config{
 	ValidationMaxUsernameLength:        64,
 	ValidationMinPasswordLength:        6,
 	ValidationMaxPasswordLength:        64,
-	DeviceCodeExpiration:                10 * time.Minute,
-	DeviceCodeExpirationStr:             "10m",
-	DeviceCodePollingInterval:           5,
+	DeviceCodeExpiration:               10 * time.Minute,
+	DeviceCodeExpirationStr:            "10m",
+	DeviceCodePollingInterval:          5,
 	Theme:                              ThemeConfig{Title: "Autentico"},
 	AllowSelfServiceDeletion:           false,
 	AllowUsernameChange:                false,
@@ -226,31 +234,35 @@ var defaultConfig = Config{
 	ProfileFieldProfileURL:             "hidden",
 	ProfileFieldLocale:                 "optional",
 	ProfileFieldAddress:                "optional",
+	AdminUIHiddenPages:                 []string{},
+	AdminUIHiddenSettings:              []string{},
+	AdminUIHiddenColumns:               "{}",
+	AdminUIDefaultPageSize:             100,
 }
 
 var (
 	Bootstrap = BootstrapConfig{
-		DbFilePath:                     "./autentico.db",
-		AppURL:                         "http://localhost:9999",
-		AppOAuthPath:                   "/oauth2",
-		AppDomain:                      "localhost",
-		AppHost:                        "localhost:9999",
-		AppPort:                        "9999",
-		AppAuthIssuer:                  "http://localhost:9999/oauth2",
-		AuthAccessTokenSecret:          "",
-		AuthRefreshTokenSecret:         "",
-		AuthCSRFProtectionSecretKey:    "",
-		DbAesKey:                       "",
-		AuthCSRFSecureCookie:           false,
-		AuthJwkCertKeyID:               "autentico-key-1",
-		AuthRefreshTokenCookieName: "autentico_refresh_token",
-		AuthRefreshTokenCookieOnly: false,
-		AuthIdpSessionCookieName:       "autentico_idp_session",
-		AuthIdpSessionSecureCookie:     false,
-		RateLimitRPS:                   5,
-		RateLimitBurst:                 10,
-		RateLimitRPM:                   20,
-		RateLimitRPMBurst:              20,
+		DbFilePath:                  "./autentico.db",
+		AppURL:                      "http://localhost:9999",
+		AppOAuthPath:                "/oauth2",
+		AppDomain:                   "localhost",
+		AppHost:                     "localhost:9999",
+		AppPort:                     "9999",
+		AppAuthIssuer:               "http://localhost:9999/oauth2",
+		AuthAccessTokenSecret:       "",
+		AuthRefreshTokenSecret:      "",
+		AuthCSRFProtectionSecretKey: "",
+		DbAesKey:                    "",
+		AuthCSRFSecureCookie:        false,
+		AuthJwkCertKeyID:            "autentico-key-1",
+		AuthRefreshTokenCookieName:  "autentico_refresh_token",
+		AuthRefreshTokenCookieOnly:  false,
+		AuthIdpSessionCookieName:    "autentico_idp_session",
+		AuthIdpSessionSecureCookie:  false,
+		RateLimitRPS:                5,
+		RateLimitBurst:              10,
+		RateLimitRPM:                20,
+		RateLimitRPMBurst:           20,
 	}
 	Values = defaultConfig
 )
@@ -299,32 +311,33 @@ func InitBootstrap() {
 	}
 
 	Bootstrap = BootstrapConfig{
-		DbFilePath:                     getEnv("AUTENTICO_DB_FILE_PATH", "./autentico.db"),
-		AppURL:                         appURL,
-		AppOAuthPath:                   oauthPath,
-		AppDomain:                      domain,
-		AppHost:                        host,
-		AppPort:                        port,
-		AppListenPort:                  getEnv("AUTENTICO_LISTEN_PORT", port),
-		AppAuthIssuer:                  appURL + oauthPath,
-		AuthAccessTokenSecret:          getEnv("AUTENTICO_ACCESS_TOKEN_SECRET", ""),
-		AuthRefreshTokenSecret:         getEnv("AUTENTICO_REFRESH_TOKEN_SECRET", ""),
-		AuthCSRFProtectionSecretKey:    getEnv("AUTENTICO_CSRF_SECRET_KEY", ""),
-		DbAesKey:                       getEnv("AUTENTICO_DB_AES_KEY", ""),
-		AuthCSRFSecureCookie:           getEnvBool("AUTENTICO_CSRF_SECURE_COOKIE", true),
-		PrivateKeyBase64:               getEnv("AUTENTICO_PRIVATE_KEY", ""),
-		AuthJwkCertKeyID:               getEnv("AUTENTICO_JWK_CERT_KEY_ID", "autentico-key-1"),
-		AuthRefreshTokenCookieName: getEnv("AUTENTICO_REFRESH_TOKEN_COOKIE_NAME", "autentico_refresh_token"),
-		AuthRefreshTokenCookieOnly: getEnvBool("AUTENTICO_REFRESH_TOKEN_COOKIE_ONLY", false),
-		AuthIdpSessionCookieName:       getEnv("AUTENTICO_IDP_SESSION_COOKIE_NAME", "autentico_idp_session"),
-		AuthIdpSessionSecureCookie:     getEnvBool("AUTENTICO_IDP_SESSION_SECURE", true),
-		RateLimitRPS:                   getEnvFloat("AUTENTICO_RATE_LIMIT_RPS", 5),
-		RateLimitBurst:                 getEnvInt("AUTENTICO_RATE_LIMIT_BURST", 10),
-		RateLimitRPM:                   getEnvFloat("AUTENTICO_RATE_LIMIT_RPM", 20),
-		RateLimitRPMBurst:              getEnvInt("AUTENTICO_RATE_LIMIT_RPM_BURST", 20),
-		AntiTimingMinMs:                getEnvInt("AUTENTICO_ANTI_TIMING_MIN_MS", 50),
-		AntiTimingMaxMs:                getEnvInt("AUTENTICO_ANTI_TIMING_MAX_MS", 150),
-		DbReadPoolSize:                 getEnvInt("AUTENTICO_DB_READ_POOL_SIZE", 0),
+		DbFilePath:                  getEnv("AUTENTICO_DB_FILE_PATH", "./autentico.db"),
+		AppURL:                      appURL,
+		AppOAuthPath:                oauthPath,
+		AppDomain:                   domain,
+		AppHost:                     host,
+		AppPort:                     port,
+		AppListenPort:               getEnv("AUTENTICO_LISTEN_PORT", port),
+		TemplatesDir:                getEnv("AUTENTICO_TEMPLATES_DIR", ""),
+		AppAuthIssuer:               appURL + oauthPath,
+		AuthAccessTokenSecret:       getEnv("AUTENTICO_ACCESS_TOKEN_SECRET", ""),
+		AuthRefreshTokenSecret:      getEnv("AUTENTICO_REFRESH_TOKEN_SECRET", ""),
+		AuthCSRFProtectionSecretKey: getEnv("AUTENTICO_CSRF_SECRET_KEY", ""),
+		DbAesKey:                    getEnv("AUTENTICO_DB_AES_KEY", ""),
+		AuthCSRFSecureCookie:        getEnvBool("AUTENTICO_CSRF_SECURE_COOKIE", true),
+		PrivateKeyBase64:            getEnv("AUTENTICO_PRIVATE_KEY", ""),
+		AuthJwkCertKeyID:            getEnv("AUTENTICO_JWK_CERT_KEY_ID", "autentico-key-1"),
+		AuthRefreshTokenCookieName:  getEnv("AUTENTICO_REFRESH_TOKEN_COOKIE_NAME", "autentico_refresh_token"),
+		AuthRefreshTokenCookieOnly:  getEnvBool("AUTENTICO_REFRESH_TOKEN_COOKIE_ONLY", false),
+		AuthIdpSessionCookieName:    getEnv("AUTENTICO_IDP_SESSION_COOKIE_NAME", "autentico_idp_session"),
+		AuthIdpSessionSecureCookie:  getEnvBool("AUTENTICO_IDP_SESSION_SECURE", true),
+		RateLimitRPS:                getEnvFloat("AUTENTICO_RATE_LIMIT_RPS", 5),
+		RateLimitBurst:              getEnvInt("AUTENTICO_RATE_LIMIT_BURST", 10),
+		RateLimitRPM:                getEnvFloat("AUTENTICO_RATE_LIMIT_RPM", 20),
+		RateLimitRPMBurst:           getEnvInt("AUTENTICO_RATE_LIMIT_RPM_BURST", 20),
+		AntiTimingMinMs:             getEnvInt("AUTENTICO_ANTI_TIMING_MIN_MS", 50),
+		AntiTimingMaxMs:             getEnvInt("AUTENTICO_ANTI_TIMING_MAX_MS", 150),
+		DbReadPoolSize:              getEnvInt("AUTENTICO_DB_READ_POOL_SIZE", 0),
 	}
 }
 

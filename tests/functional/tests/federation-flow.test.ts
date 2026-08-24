@@ -186,7 +186,7 @@ async function performFederatedLogin(
   const authorizeSig = sigMatch ? sigMatch[1] : '';
 
   const idpCookies = idpAuthorizeResp.headers.getSetCookie();
-  const csrfCookie = idpCookies.find((c) => c.startsWith('_gorilla_csrf='));
+  const csrfCookie = idpCookies.find((c) => c.startsWith('csrf_token='));
   if (!csrfCookie) throw new Error('Could not extract CSRF cookie from Instance B');
 
   // Extract hidden form fields from Instance B's login page
@@ -210,7 +210,7 @@ async function performFederatedLogin(
     body: new URLSearchParams({
       username: usernameOnB,
       password: passwordOnB,
-      'gorilla.csrf.Token': csrfToken,
+      'csrf_token': csrfToken,
       authorize_sig: authorizeSig,
       client_id: idpClientId,
       redirect_uri: idpRedirectUri,

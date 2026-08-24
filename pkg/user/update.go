@@ -121,6 +121,10 @@ func UpdateUser(id string, req UserUpdateRequest) error {
 	if req.AddressCountry != "" {
 		newAddressCountry = req.AddressCountry
 	}
+	newRequirePasswordChange := usr.RequirePasswordChange
+	if req.RequirePasswordChange != nil {
+		newRequirePasswordChange = *req.RequirePasswordChange
+	}
 
 	var emailParam interface{}
 	if newEmail != "" {
@@ -152,13 +156,14 @@ func UpdateUser(id string, req UserUpdateRequest) error {
 			address_region = ?,
 			address_postal_code = ?,
 			address_country = ?,
+			require_password_change = ?,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?`
 	_, err = db.GetDB().Exec(query,
 		newUsername, emailParam, newRole, newPassword, newIsEmailVerified, newTotpVerified,
 		newGivenName, newFamilyName, newMiddleName, newNickname, newWebsite, newGender, newBirthdate, newProfileURL,
 		newPhoneNumber, newPhoneNumberVerified, newPicture, newLocale, newZoneinfo,
-		newAddressStreet, newAddressLocality, newAddressRegion, newAddressPostalCode, newAddressCountry,
+		newAddressStreet, newAddressLocality, newAddressRegion, newAddressPostalCode, newAddressCountry, newRequirePasswordChange,
 		id,
 	)
 	if err != nil {

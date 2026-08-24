@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS certificates (
     key_ciphertext BLOB,
 	intermediary_id TEXT,
 	expire_date DATETIME,
+    cn TEXT,
+    hosts TEXT,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `

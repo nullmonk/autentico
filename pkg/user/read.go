@@ -43,7 +43,7 @@ const userSelectColumns = `
 	users.totp_secret, users.totp_verified, users.is_email_verified, users.deactivated_at, users.registered_at,
 	users.given_name, users.family_name, users.middle_name, users.nickname, users.website, users.gender, users.birthdate, users.profile,
 	users.phone_number, users.phone_number_verified, users.picture, users.locale, users.zoneinfo,
-	users.address_street, users.address_locality, users.address_region, users.address_postal_code, users.address_country
+	users.address_street, users.address_locality, users.address_region, users.address_postal_code, users.address_country, users.require_password_change
 `
 
 func scanUser(row interface {
@@ -58,6 +58,7 @@ func scanUser(row interface {
 		&u.GivenName, &u.FamilyName, &u.MiddleName, &u.Nickname, &u.Website, &u.Gender, &u.Birthdate, &u.ProfileURL,
 		&u.PhoneNumber, &u.PhoneNumberVerified, &u.Picture, &u.Locale, &u.Zoneinfo,
 		&u.AddressStreet, &u.AddressLocality, &u.AddressRegion, &u.AddressPostalCode, &u.AddressCountry,
+		&u.RequirePasswordChange,
 	)
 	if err != nil {
 		return nil, err

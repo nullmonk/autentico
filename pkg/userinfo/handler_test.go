@@ -493,7 +493,7 @@ func TestHandleUserInfo_PhoneScope_IncludesVerified(t *testing.T) {
 
 func TestHandleUserInfo_CompleteProfile(t *testing.T) {
 	testutils.WithTestDB(t)
-	
+
 	userID := xid.New().String()
 	_, _ = db.GetDB().Exec(`
 		INSERT INTO users (id, username, email, is_email_verified, password, given_name, family_name, phone_number, picture, locale, zoneinfo, address_street, address_locality, address_region, address_postal_code, address_country)
@@ -525,9 +525,9 @@ func TestHandleUserInfo_CompleteProfile(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/oauth2/userinfo", nil)
 	req.Header.Set("Authorization", "Bearer "+signedToken)
 	rr := httptest.NewRecorder()
-	
+
 	HandleUserInfo(rr, req)
-	
+
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
 

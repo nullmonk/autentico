@@ -16,7 +16,7 @@ var defaults = map[string]string{
 	"authorization_code_expiration":  "10m",
 	"access_token_audience":          "[]",
 	"allow_self_signup":              "false",
-	"sso_enabled":                   "true",
+	"sso_enabled":                    "true",
 	"sso_session_idle_timeout":       "4h",
 	"sso_session_max_age":            "720h",
 	"validation_min_username_length": "4",
@@ -41,18 +41,19 @@ var defaults = map[string]string{
 	"magic_link_enabled":             "false",
 	"magic_link_expiration":          "15m",
 	"audit_log_retention":            "720h",
-	"smtp_host":                       "",
-	"smtp_port":                       "587",
-	"smtp_username":                   "",
-	"smtp_password":                   "",
-	"smtp_from":                       "",
-	"theme_title":                     "Autentico",
-	"theme_logo_url":                  "",
-	"theme_css_inline":                "",
-	"theme_css_file":                  "",
-	"theme_brand_color":               "#ff7b00",
-	"theme_tagline":                   "",
-	"email_footer_text":               "",
+	"applications":                   "[]",
+	"smtp_host":                      "",
+	"smtp_port":                      "587",
+	"smtp_username":                  "",
+	"smtp_password":                  "",
+	"smtp_from":                      "",
+	"theme_title":                    "Autentico",
+	"theme_logo_url":                 "",
+	"theme_css_inline":               "",
+	"theme_css_file":                 "",
+	"theme_brand_color":              "#ff7b00",
+	"theme_tagline":                  "",
+	"email_footer_text":              "",
 	"onboarded":                      "false",
 	"allow_self_service_deletion":    "false",
 	"allow_username_change":          "false",
@@ -71,10 +72,14 @@ var defaults = map[string]string{
 	"profile_field_profile":          "hidden",
 	"profile_field_locale":           "hidden",
 	"profile_field_address":          "optional",
-	"footer_links":                  "[]",
+	"footer_links":                   "[]",
 	"device_code_expiration":         "10m",
 	"device_code_polling_interval":   "5",
 	"cors_allowed_origins":           "",
+	"admin_ui_hidden_pages":          "[]",
+	"admin_ui_hidden_settings":       "[]",
+	"admin_ui_hidden_columns":        "{}",
+	"default_page_size":              "100",
 }
 
 // EnsureDefaults writes any missing well-known keys with their default values.
@@ -343,6 +348,27 @@ func LoadIntoConfig() error {
 				}
 				cfg.CORSAllowedOrigins = append(cfg.CORSAllowedOrigins, o)
 			}
+		}
+	}
+
+	if v, ok := all["admin_ui_hidden_pages"]; ok {
+		var pages []string
+		if err := json.Unmarshal([]byte(v), &pages); err == nil {
+			cfg.AdminUIHiddenPages = pages
+		}
+	}
+	if v, ok := all["admin_ui_hidden_settings"]; ok {
+		var settings []string
+		if err := json.Unmarshal([]byte(v), &settings); err == nil {
+			cfg.AdminUIHiddenSettings = settings
+		}
+	}
+	if v, ok := all["admin_ui_hidden_columns"]; ok {
+		cfg.AdminUIHiddenColumns = v
+	}
+	if v, ok := all["default_page_size"]; ok {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.AdminUIDefaultPageSize = n
 		}
 	}
 
