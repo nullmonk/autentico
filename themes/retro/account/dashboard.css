@@ -174,13 +174,6 @@
   gap: 0.75rem;
 }
 
-.dash-category-title {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-muted);
-}
-
 .dash-category-spacer {
   height: 0.5rem;
 }
