@@ -187,6 +187,7 @@
 .app-card {
   display: flex;
   flex: 1 1 9.5rem;
+  max-width: 14rem;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
@@ -203,6 +204,7 @@
 
 .app-card-detailed {
   flex: 1 1 20rem;
+  max-width: 100%;
   flex-direction: row;
   align-items: center;
   text-align: left;
