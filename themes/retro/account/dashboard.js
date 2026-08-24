@@ -57,16 +57,20 @@ function renderAppCard(app) {
 
 function renderApplications(apps) {
   const list = document.getElementById('apps-list');
+  const title = document.getElementById('dash-apps-title');
   if (!apps || apps.length === 0) {
+    if (title) title.hidden = false;
     list.innerHTML = '<p class="auth-text-muted">No applications available.</p>';
     return;
   }
 
   const blocks = [];
   let currentStandaloneGroup = [];
+  let hasCategories = false;
 
   apps.forEach((node, idx) => {
     if (node.items) {
+      hasCategories = true;
       if (currentStandaloneGroup.length > 0) {
         blocks.push({ type: 'standalone-group', items: currentStandaloneGroup, id: `sg-${idx}` });
         currentStandaloneGroup = [];
@@ -77,6 +81,10 @@ function renderApplications(apps) {
     }
   });
 
+  if (title) {
+    title.hidden = hasCategories;
+  }
+
   if (currentStandaloneGroup.length > 0) {
     blocks.push({ type: 'standalone-group', items: currentStandaloneGroup, id: 'sg-last' });
   }
@@ -85,7 +93,7 @@ function renderApplications(apps) {
     if (block.type === 'category') {
       const node = block.node;
       const header = node.name
-        ? `<h3 class="dash-category-title">${escapeHtml(node.name)}</h3>`
+        ? `<h2 class="dash-section-title">&gt; ${escapeHtml(node.name)}</h2>`
         : `<div class="dash-category-spacer"></div>`;
 
       const itemsHtml = node.items.map(renderAppCard).join('');
