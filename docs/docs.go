@@ -1423,87 +1423,14 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "Returns all applications",
+                "description": "Returns the applications setting JSON",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "admin-applications"
                 ],
-                "summary": "List applications",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "Creates a new application",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin-applications"
-                ],
-                "summary": "Create application",
-                "parameters": [
-                    {
-                        "description": "Application details",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/application.ApplicationCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/api/applications/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "Gets an application by ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin-applications"
-                ],
-                "summary": "Get application",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Application ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Get applications config",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1520,7 +1447,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "Updates an application",
+                "description": "Updates the applications setting JSON",
                 "consumes": [
                     "application/json"
                 ],
@@ -1530,65 +1457,24 @@ const docTemplate = `{
                 "tags": [
                     "admin-applications"
                 ],
-                "summary": "Update application",
+                "summary": "Update applications",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Application ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Application updates",
+                        "description": "Applications tree",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/application.ApplicationUpdateRequest"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/application.ApplicationNode"
+                            }
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "Deletes an application",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin-applications"
-                ],
-                "summary": "Delete application",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Application ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -5084,11 +4970,14 @@ const docTemplate = `{
                 }
             }
         },
-        "application.ApplicationCreateRequest": {
+        "application.ApplicationNode": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "groups": {
-                    "description": "Array of group IDs",
+                    "description": "ADO groups required for visibility",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -5097,26 +4986,12 @@ const docTemplate = `{
                 "icon": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "application.ApplicationUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "groups": {
-                    "description": "Array of group IDs",
+                "items": {
+                    "description": "Child items (for categories)",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/application.ApplicationNode"
                     }
-                },
-                "icon": {
-                    "type": "string"
                 },
                 "name": {
                     "type": "string"

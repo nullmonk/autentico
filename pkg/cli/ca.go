@@ -169,7 +169,7 @@ func RunCaInit(c *cli.Context) error {
 	}
 	clientInterPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: clientInterPrivBytes})
 
-	clientInterEncryptedKey, err := crypto.Encrypt(clientInterPrivPEM, clientInterPassword)
+	clientInterEncryptedKey, err := crypto.Encrypt(clientInterPrivPEM, interPassword)
 	if err != nil {
 		return err
 	}
@@ -587,7 +587,7 @@ func RunCaMtlsBundle(c *cli.Context) error {
 		// Generate new certificate
 		fmt.Printf("No active certificate found for user %s, generating a new one...\n", username)
 
-		interCertRec, err := ca.GetActiveIntermediaryCA(readDb)
+		interCertRec, err := ca.GetActiveIntermediaryCA(readDb, "client-int")
 		if err != nil {
 			return fmt.Errorf("failed to get active intermediary CA: %w", err)
 		}
