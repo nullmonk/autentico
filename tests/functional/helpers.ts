@@ -163,7 +163,7 @@ async function obtainTokenViaAuthCodeInternal(
   }
 
   const html = await authorizeResp.text();
-  const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+  const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
   if (!csrfMatch) throw new Error('Could not extract CSRF token from login page');
   const csrfToken = csrfMatch[1];
 

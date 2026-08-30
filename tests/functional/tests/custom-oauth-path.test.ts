@@ -148,7 +148,7 @@ describe('Custom OAuth Path (/oidc)', () => {
       expect(html).toContain('<form');
 
       // Extract CSRF token, authorize signature, and cookie
-      const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+      const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
       expect(csrfMatch).toBeTruthy();
       const csrfToken = csrfMatch![1];
 

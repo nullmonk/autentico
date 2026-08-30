@@ -110,12 +110,12 @@ func performAuthorizationCodeFlow(t *testing.T, ts *TestServer, clientID, redire
 
 	// Step 1: GET /oauth2/authorize to get login page with CSRF token
 	authorizeURL := ts.BaseURL + "/oauth2/authorize?" + url.Values{
-		"response_type":        {"code"},
-		"client_id":            {clientID},
-		"redirect_uri":         {redirectURI},
-		"scope":                {"openid profile email"},
-		"state":                {state},
-		"code_challenge":       {testCodeChallenge},
+		"response_type":         {"code"},
+		"client_id":             {clientID},
+		"redirect_uri":          {redirectURI},
+		"scope":                 {"openid profile email"},
+		"state":                 {state},
+		"code_challenge":        {testCodeChallenge},
 		"code_challenge_method": {"S256"},
 	}.Encode()
 
@@ -179,11 +179,11 @@ func performAuthorizationCodeFlowWithScope(t *testing.T, ts *TestServer, clientI
 	t.Helper()
 
 	params := url.Values{
-		"response_type":        {"code"},
-		"client_id":            {clientID},
-		"redirect_uri":         {redirectURI},
-		"state":                {state},
-		"code_challenge":       {testCodeChallenge},
+		"response_type":         {"code"},
+		"client_id":             {clientID},
+		"redirect_uri":          {redirectURI},
+		"state":                 {state},
+		"code_challenge":        {testCodeChallenge},
 		"code_challenge_method": {"S256"},
 	}
 	if scope != "" {
@@ -325,12 +325,12 @@ func performSignupFlow(t *testing.T, ts *TestServer, username, password, redirec
 
 	// Step 1: GET /oauth2/authorize?prompt=create to obtain a CSRF token
 	signupURL := ts.BaseURL + "/oauth2/authorize?" + url.Values{
-		"response_type":        {"code"},
-		"prompt":               {"create"},
-		"redirect_uri":         {redirectURI},
-		"state":                {state},
-		"client_id":            {"test-client"},
-		"code_challenge":       {testCodeChallenge},
+		"response_type":         {"code"},
+		"prompt":                {"create"},
+		"redirect_uri":          {redirectURI},
+		"state":                 {state},
+		"client_id":             {"test-client"},
+		"code_challenge":        {testCodeChallenge},
 		"code_challenge_method": {"S256"},
 	}.Encode()
 

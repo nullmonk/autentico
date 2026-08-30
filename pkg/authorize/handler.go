@@ -66,7 +66,7 @@ func HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 
 	// Validate redirect_uri format first — if invalid we cannot redirect back safely
 	if !utils.IsValidRedirectURI(request.RedirectURI) {
-		view.RenderError(w, r, http.StatusBadRequest,"Invalid redirect_uri")
+		view.RenderError(w, r, http.StatusBadRequest, "Invalid redirect_uri")
 		return
 	}
 
@@ -74,13 +74,13 @@ func HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	registeredClient, err := client.ClientByClientID(request.ClientID)
 	if err != nil {
 		slog.Warn("authorize: unknown client_id", "request_id", reqid.Get(r.Context()), "client_id", request.ClientID, "ip", utils.GetClientIP(r))
-		view.RenderError(w, r, http.StatusBadRequest,"Unknown client_id")
+		view.RenderError(w, r, http.StatusBadRequest, "Unknown client_id")
 		return
 	}
 
 	if !registeredClient.IsActive {
 		slog.Warn("authorize: inactive client", "request_id", reqid.Get(r.Context()), "client_id", request.ClientID, "ip", utils.GetClientIP(r))
-		view.RenderError(w, r, http.StatusBadRequest,"Client is inactive")
+		view.RenderError(w, r, http.StatusBadRequest, "Client is inactive")
 		return
 	}
 
@@ -88,7 +88,7 @@ func HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	// if invalid, do not redirect — render an error page instead to avoid open redirector.
 	if !client.IsValidRedirectURI(registeredClient, request.RedirectURI) {
 		slog.Warn("authorize: invalid redirect_uri for client", "request_id", reqid.Get(r.Context()), "client_id", request.ClientID, "redirect_uri", request.RedirectURI)
-		view.RenderError(w, r, http.StatusBadRequest,"Redirect URI not allowed for this client")
+		view.RenderError(w, r, http.StatusBadRequest, "Redirect URI not allowed for this client")
 		return
 	}
 
