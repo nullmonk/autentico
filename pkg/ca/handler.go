@@ -24,7 +24,7 @@ func RespondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		_ = json.NewEncoder(w).Encode(data)
 	}
 }
 
@@ -103,7 +103,7 @@ func HandleGetCAChain(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"ca-chain.crt\"")
-	w.Write([]byte(chain))
+	_, _ = w.Write([]byte(chain))
 }
 
 // @Summary List Certificate Authorities
@@ -557,7 +557,7 @@ func HandleDownloadUserCert(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-pkcs12")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.p12\"", filename))
-	w.Write(pfxData)
+	_, _ = w.Write(pfxData)
 }
 
 type GenerateServerCertFromCSRRequest struct {

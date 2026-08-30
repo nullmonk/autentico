@@ -167,29 +167,22 @@ definitions:
       token:
         type: string
     type: object
-  application.ApplicationCreateRequest:
+  application.ApplicationNode:
     properties:
+      description:
+        type: string
       groups:
-        description: Array of group IDs
+        description: ADO groups required for visibility
         items:
           type: string
         type: array
       icon:
         type: string
-      name:
-        type: string
-      url:
-        type: string
-    type: object
-  application.ApplicationUpdateRequest:
-    properties:
-      groups:
-        description: Array of group IDs
+      items:
+        description: Child items (for categories)
         items:
-          type: string
+          $ref: '#/definitions/application.ApplicationNode'
         type: array
-      icon:
-        type: string
       name:
         type: string
       url:
@@ -2074,7 +2067,7 @@ paths:
       - apitokens
   /admin/api/applications:
     get:
-      description: Returns all applications
+      description: Returns the applications setting JSON
       produces:
       - application/json
       responses:
@@ -2085,103 +2078,30 @@ paths:
             type: object
       security:
       - AdminAuth: []
-      summary: List applications
-      tags:
-      - admin-applications
-    post:
-      consumes:
-      - application/json
-      description: Creates a new application
-      parameters:
-      - description: Application details
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/application.ApplicationCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - AdminAuth: []
-      summary: Create application
-      tags:
-      - admin-applications
-  /admin/api/applications/{id}:
-    delete:
-      description: Deletes an application
-      parameters:
-      - description: Application ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - AdminAuth: []
-      summary: Delete application
-      tags:
-      - admin-applications
-    get:
-      description: Gets an application by ID
-      parameters:
-      - description: Application ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - AdminAuth: []
-      summary: Get application
+      summary: Get applications config
       tags:
       - admin-applications
     put:
       consumes:
       - application/json
-      description: Updates an application
+      description: Updates the applications setting JSON
       parameters:
-      - description: Application ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Application updates
+      - description: Applications tree
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/application.ApplicationUpdateRequest'
+          items:
+            $ref: '#/definitions/application.ApplicationNode'
+          type: array
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
+        "204":
+          description: No Content
       security:
       - AdminAuth: []
-      summary: Update application
+      summary: Update applications
       tags:
       - admin-applications
   /admin/api/audit-logs:

@@ -169,7 +169,7 @@ func RunCaInit(c *cli.Context) error {
 	}
 	clientInterPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: clientInterPrivBytes})
 
-	clientInterEncryptedKey, err := crypto.Encrypt(clientInterPrivPEM, clientInterPassword)
+	clientInterEncryptedKey, err := crypto.Encrypt(clientInterPrivPEM, interPassword)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func RunCaRefresh(c *cli.Context) error {
 		return fmt.Errorf("failed to get active root CA: %w", err)
 	}
 	if caCertRec == nil {
-		return fmt.Errorf("no active Root CA found. Run 'autentico ca init' first.")
+		return fmt.Errorf("no active Root CA found: run 'autentico ca init' first")
 	}
 
 	clientInter, err := ca.GetActiveIntermediaryCA(db.GetReadDB(), "client-int")
@@ -587,7 +587,7 @@ func RunCaMtlsBundle(c *cli.Context) error {
 		// Generate new certificate
 		fmt.Printf("No active certificate found for user %s, generating a new one...\n", username)
 
-		interCertRec, err := ca.GetActiveIntermediaryCA(readDb)
+		interCertRec, err := ca.GetActiveIntermediaryCA(readDb, "client-int")
 		if err != nil {
 			return fmt.Errorf("failed to get active intermediary CA: %w", err)
 		}
@@ -693,7 +693,7 @@ func RunCaMtlsBundle(c *cli.Context) error {
 		}
 	}
 
-	pfxData, err := pkcs12.Encode(rand.Reader, priv, parsedCert, []*x509.Certificate{parsedInter}, bundlePassword)
+	pfxData, err := pkcs12.Modern2023.Encode(priv, parsedCert, []*x509.Certificate{parsedInter}, bundlePassword)
 	if err != nil {
 		return fmt.Errorf("failed to create pkcs12 bundle: %w", err)
 	}

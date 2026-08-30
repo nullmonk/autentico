@@ -35,7 +35,7 @@ func HandleGetSettingsApplications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": nodes})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": nodes})
 }
 
 // HandleUpdateSettingsApplications updates the applications JSON
@@ -103,7 +103,7 @@ func HandleListUserApplications(w http.ResponseWriter, r *http.Request) {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, "server_error", "Failed to get user groups")
 		return
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	userGroups := make(map[string]bool)
 	for rows.Next() {
 		var g string
@@ -126,7 +126,7 @@ func HandleListUserApplications(w http.ResponseWriter, r *http.Request) {
 	filtered := filterApplications(nodes, userGroups)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": filtered})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": filtered})
 }
 
 func filterApplications(nodes []ApplicationNode, userGroups map[string]bool) []ApplicationNode {
