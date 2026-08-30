@@ -178,7 +178,7 @@ async function performFederatedLogin(
   }
 
   const idpHtml = await idpAuthorizeResp.text();
-  const csrfMatch = idpHtml.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+  const csrfMatch = idpHtml.match(/name="csrf_token"\s+value="([^"]+)"/);
   if (!csrfMatch) throw new Error('Could not extract CSRF token from Instance B login page');
   const csrfToken = csrfMatch[1];
 

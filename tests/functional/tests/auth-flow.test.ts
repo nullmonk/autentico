@@ -33,7 +33,7 @@ describe('Authorization Code Flow', () => {
     expect(html).toContain('<form');
 
     // Extract CSRF token, authorize signature, and cookie
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     expect(csrfMatch).toBeTruthy();
     const csrfToken = csrfMatch![1];
 
@@ -138,7 +138,7 @@ describe('Authorization Code Flow', () => {
     expect(authorizeResp.status).toBe(200);
 
     const html = await authorizeResp.text();
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     expect(csrfMatch).toBeTruthy();
 
     const cookies = authorizeResp.headers.getSetCookie();
@@ -186,7 +186,7 @@ describe('Authorization Code Flow', () => {
     expect(authorizeResp.status).toBe(200);
 
     const html = await authorizeResp.text();
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     const sigMatch = html.match(/name="authorize_sig"\s+value="([^"]*)"/);
     expect(csrfMatch).toBeTruthy();
     expect(sigMatch).toBeTruthy();
@@ -236,7 +236,7 @@ describe('Authorization Code Flow', () => {
     expect(authorizeResp.status).toBe(200);
 
     const html = await authorizeResp.text();
-    const csrfMatch = html.match(/name="gorilla\.csrf\.Token"\s+value="([^"]+)"/);
+    const csrfMatch = html.match(/name="csrf_token"\s+value="([^"]+)"/);
     const sigMatch = html.match(/name="authorize_sig"\s+value="([^"]*)"/);
 
     const cookies = authorizeResp.headers.getSetCookie();

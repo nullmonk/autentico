@@ -31,7 +31,7 @@ func List(limit, offset int) ([]ApiToken, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tokens []ApiToken
 	for rows.Next() {
