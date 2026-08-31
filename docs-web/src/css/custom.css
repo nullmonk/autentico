@@ -26,7 +26,7 @@
   --docusaurus-highlighted-code-line-bg: rgba(51, 255, 0, 0.2);
 
   --ifm-navbar-background-color: #1a1a1a;
-  --ifm-footer-background-color: #1a1a1a;
+  --ifm-footer-background-color: #000000;
 
   /* Make buttons look blocky/retro */
   --ifm-button-border-radius: 0;
@@ -50,7 +50,7 @@
   --docusaurus-highlighted-code-line-bg: rgba(51, 255, 0, 0.3);
 
   --ifm-navbar-background-color: #0d0d0d;
-  --ifm-footer-background-color: #0d0d0d;
+  --ifm-footer-background-color: #000000;
 }
 
 /* Add a subtle CRT scanline effect */
