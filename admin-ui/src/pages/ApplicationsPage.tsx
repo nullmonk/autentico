@@ -305,6 +305,7 @@ export default function ApplicationsPage() {
           columns={columns}
           rowKey="key"
           loading={isLoadingApps}
+          scroll={{ x: 'max-content' }}
           pagination={false}
         />
       </Card>

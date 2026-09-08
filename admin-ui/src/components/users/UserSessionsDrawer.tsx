@@ -160,6 +160,7 @@ export default function UserSessionsDrawer({
           rowKey="id"
           loading={isLoading}
           pagination={false}
+          scroll={{ x: 'max-content' }}
           size="small"
           locale={{ emptyText: "No active sessions" }}
         />

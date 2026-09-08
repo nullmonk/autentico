@@ -1459,6 +1459,7 @@ export default function SettingsPage() {
                           rowKey="key"
                           size="small"
                           pagination={false}
+                          scroll={{ x: 'max-content' }}
                           rowClassName={(row) =>
                             row.current !== row.incoming ? "ant-table-row-changed" : ""
                           }
