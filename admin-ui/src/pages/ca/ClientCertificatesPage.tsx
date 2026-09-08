@@ -194,7 +194,7 @@ export default function ClientCertificatesPage() {
         columns={columns}
         rowKey="id"
         loading={loadingCerts || loadingAuth}
-        scroll={{ x: true }}
+        scroll={{ x: 'max-content' }}
         onChange={handleTableChange}
       />
 

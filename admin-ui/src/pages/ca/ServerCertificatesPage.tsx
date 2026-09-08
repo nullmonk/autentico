@@ -149,7 +149,7 @@ export default function ServerCertificatesPage() {
         columns={columns}
         rowKey="id"
         loading={loadingCerts || loadingAuth}
-        scroll={{ x: true }}
+        scroll={{ x: 'max-content' }}
       />
 
       <Modal

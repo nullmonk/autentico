@@ -124,6 +124,7 @@ export default function UserGroupsDrawer({ open, userId, username, onClose }: Us
           rowKey="id"
           loading={isLoading}
           pagination={false}
+          scroll={{ x: 'max-content' }}
           size="small"
           locale={{ emptyText: "Not a member of any group" }}
         />
